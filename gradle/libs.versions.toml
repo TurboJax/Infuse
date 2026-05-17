@@ -1,0 +1,12 @@
+[versions]
+minecraft = "1.21.11"
+placeholderapi = "2.11.6"
+run-paper = "3.0.2"
+paperweight = "2.0.0-beta.21"
+
+[plugins]
+paperweight = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
+
+[libraries]
+placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholderapi" }
