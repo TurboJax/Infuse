@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.catadmirer'
-version = '2.4.3'
+version = '2.4.4'
 
 repositories {
     maven {
@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     compileOnly "me.clip:placeholderapi:${placeholderAPIVersion}"
-    paperweight.paperDevBundle("${minecraftVersion}-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("${minecraftVersion}+")
 }
 
 tasks {
