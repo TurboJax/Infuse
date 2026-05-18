@@ -79,3 +79,11 @@ The first effect crafted starts a ritual and gives an augmented effect, next 3 g
 ![Thunder](https://cdn.modrinth.com/data/cached_images/6f3181d1829d9e5fcca07725fa20b9223f0b6c19_0.webp)
 ![Ender](https://cdn.modrinth.com/data/cached_images/21a561d047f1fd3339103200a4e58f6e77855588_0.webp)
 ![Apophis](https://cdn.modrinth.com/data/cached_images/4a4ba4921556d68bdcf2f28e9f4e53361456e6b4.png)
+
+
+### Credits
+Thank you to [Jannyboy11](https://github.com/Jannyboy11) for the platform and version classes, and general inspiration for the multi-version support!
+Thank you to [Lucko](https://github.com/lucko) and [pop4959](https://github.com/pop4959) for inspiring multi-platform support!
+Thank you to the devs at PaperMC for making great guides and having amazing support!
+
+All of you have contributed to this project in both borrowed code and ideas, and I thank you all greatly.
