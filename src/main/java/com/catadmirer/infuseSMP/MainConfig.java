@@ -233,6 +233,9 @@ public class MainConfig {
         if (!config.contains("emerald.xp_stolen_per_hit")) config.set("emerald.xp_stolen_per_hit", 15);
         if (!config.contains("emerald.xp_stolen_percent")) config.set("emerald.xp_stolen_percent", 1);
         if (!config.contains("emerald.percent_xp_to_share")) config.set("emerald.percent_xp_to_share", 0.5);
+        if (!config.contains("nether_star.custom_model_data")) config.set("nether_star.custom_model_data", -1);
+        if (!config.contains("nether_star.augmented_chance")) config.set("nether_star.augmented_chance", 0.1);
+        if (!config.contains("nether_star.effects")) config.set("nether_star.effects", List.of("emerald", "feather", "fire", "frost", "haste", "heart", "invis", "ocean", "regen", "speed", "strength", "thunder"));
 
         save();
     }
@@ -251,5 +254,17 @@ public class MainConfig {
 
     public int hasteUnbreakingLevel() {
         return config.getInt("haste.enchantment.unbreaking_level");
+    }
+
+    public int netherStarCMD() {
+        return config.getInt("nether_star.custom_model_data", -1);
+    }
+
+    public double netherStarAugChance() {
+        return config.getDouble("nether_star.augmented_chance", 0.1);
+    }
+
+    public List<EffectMapping> effectsFromNetherStar() {
+        return config.getStringList("nether_star.effects").stream().map(EffectMapping::fromEffectKey).filter(Objects::nonNull).toList();
     }
 }

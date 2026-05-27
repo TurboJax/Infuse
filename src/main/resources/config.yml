@@ -31,6 +31,29 @@ discord_webhook_url: ""
 
 brewing_gui: true
 
+nether_star:
+  # If > 0, the nether star item will require a custom model data tag to give the player an effect
+  custom_model_data: -1
+  # The % chance the effect is augmented
+  augmented_chance: 0.1
+  # The list of effects that a player can get from the nether star
+  effects:
+    - "emerald"
+    - "feather"
+    - "fire"
+    - "frost"
+    - "haste"
+    - "heart"
+    - "invis"
+    - "ocean"
+    - "regen"
+    - "speed"
+    - "strength"
+    - "thunder"
+#    - "ender"
+#    - "apophis"
+#    - "thief"
+
 # random = Random effect drops
 # 1/2 = Slot 1/2 Drops
 # none = None drop

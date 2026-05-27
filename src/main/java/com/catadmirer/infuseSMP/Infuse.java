@@ -124,7 +124,7 @@ public class Infuse extends JavaPlugin implements Listener {
         getCommand("untrust").setExecutor(new TrustCommand(dataManager));
         getCommand("recipes").setExecutor(new Recipes(this));
         getCommand("swap").setExecutor(new SwapEffects(this));
-        
+
         getCommand("infuse").setExecutor(new InfuseCommand(this));
         getCommand("infuse").setTabCompleter(new InfuseCommand(this));
 
@@ -135,6 +135,8 @@ public class Infuse extends JavaPlugin implements Listener {
         getCommand("lspark").setExecutor(new Abilities(this));
 
         getCommand("draw").setExecutor(new Draw());
+
+        getCommand("giveselector").setExecutor(new EffectGiver(this));
 
         getCommand("controls").setExecutor((sender, command, label, args) -> {
             // Making sure only players can run the command
@@ -220,6 +222,9 @@ public class Infuse extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new Speed(this), this);
         Bukkit.getPluginManager().registerEvents(new Strength(this), this);
         Bukkit.getPluginManager().registerEvents(new Thunder(this), this);
+
+        // nether star tracker
+        Bukkit.getPluginManager().registerEvents(new EffectGiver(this), this);
 
         // Enabling apophis listeners if the config allows
         if (mainConfig.enableApophis()) {

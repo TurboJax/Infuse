@@ -42,6 +42,9 @@ commands:
   draw:
     description: Draws a line between two coordinates
     usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
+  giveselector:
+    description: gives the sender a nether star selector
+    usage: /giveselector
 permissions:
   ability.use:
     description: Allows the player to use abilities.
