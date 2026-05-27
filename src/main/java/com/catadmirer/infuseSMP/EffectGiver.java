@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP;
 
 import com.catadmirer.infuseSMP.managers.EffectMapping;
+import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
@@ -86,5 +87,10 @@ public class EffectGiver implements CommandExecutor, Listener {
         } else {
             player.sendMessage(Component.text("You don't have enough space in your inventory to get an effect.", NamedTextColor.RED));
         }
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerPostRespawnEvent event) {
+        event.getPlayer().getInventory().addItem(getRandomEffect());
     }
 }
