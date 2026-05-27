@@ -20,12 +20,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class EffectGiver implements CommandExecutor, Listener {
     private final Infuse plugin;
+    private final EquipEffect equipHandler;
 
     public EffectGiver(Infuse plugin) {
         this.plugin = plugin;
+        equipHandler = new EquipEffect(plugin);
     }
 
-    public ItemStack getRandomEffect() {
+    public EffectMapping getRandomEffect() {
         List<EffectMapping> effects = plugin.getMainConfig().effectsFromNetherStar();
         EffectMapping effect = effects.get((int) (Math.random() * effects.size())).regular();
 
@@ -33,7 +35,7 @@ public class EffectGiver implements CommandExecutor, Listener {
             effect = effect.augmented();
         }
 
-        return effect.createItem();
+        return effect;
     }
 
     public ItemStack getSelector() {
@@ -79,18 +81,11 @@ public class EffectGiver implements CommandExecutor, Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        Map<Integer,ItemStack> leftovers = player.getInventory().addItem(getRandomEffect());
-
-        if (leftovers.isEmpty()) {
-            item.subtract(1);
-            player.sendMessage(Component.text("You have recieved a random effect!", NamedTextColor.GREEN));
-        } else {
-            player.sendMessage(Component.text("You don't have enough space in your inventory to get an effect.", NamedTextColor.RED));
-        }
+        equipHandler.safeEquip(player, getRandomEffect());
     }
 
     @EventHandler
     public void onRespawn(PlayerPostRespawnEvent event) {
-        event.getPlayer().getInventory().addItem(getRandomEffect());
+        equipHandler.safeEquip(event.getPlayer(), getRandomEffect());
     }
 }
