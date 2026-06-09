@@ -86,7 +86,7 @@ public class EffectConstants {
      * 
      * @return the {@link BossBar.Color} for the effect.
      */
-    public static BossBar.Color bossBarColor(int effectId) {
+    public static BossBar.Color ritualColor(int effectId) {
         return switch (effectId) {
             case EffectIds.APOPHIS -> BossBar.Color.PURPLE;
             case EffectIds.EMERALD -> BossBar.Color.GREEN;
