@@ -1,25 +1,13 @@
 package com.catadmirer.infuseSMP.effects;
 
-import com.catadmirer.infuseSMP.EffectIds;
-import com.catadmirer.infuseSMP.HitTracker;
-import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.Message.MessageType;
+import com.catadmirer.infuseSMP.*;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Particle;
-import org.bukkit.Particle.DustOptions;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.Particle.DustOptions;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Entity;
@@ -29,67 +17,58 @@ import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Thunder extends InfuseEffect {
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
-    
     private static final Map<UUID,Integer> hitTracker = new HashMap<>();
     private static final Queue<Runnable> decayQueue = new ConcurrentLinkedQueue<>();
 
+    private final Infuse plugin;
+
     public Thunder() {
-        super(EffectIds.THUNDER, "thunder", false);
+        this(false);
     }
 
     public Thunder(boolean augmented) {
-        super(EffectIds.THUNDER, "thunder", augmented);
+        super("thunder", EffectIds.THUNDER, augmented, EffectConstants.potionColor(EffectIds.THUNDER), EffectConstants.ritualColor(EffectIds.THUNDER));
+
+        this.plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_THUNDER_NAME : MessageType.THUNDER_NAME);
+    public void equip(Player owner) {}
+
+    @Override
+    public void unequip(Player owner) {
+        hitTracker.remove(owner.getUniqueId());
     }
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_THUNDER_LORE : MessageType.THUNDER_LORE);
-    }
+    public void applyPassives(Player owner) {}
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Thunder(true);
-    }
+    public void activateSpark(Player owner) {
+        UUID uuid = owner.getUniqueId();
 
-    @Override
-    public InfuseEffect getRegularForm() {
-        return new Thunder(false);
-    }
-
-    @Override
-    public void equip(Player player) {}
-
-    @Override
-    public void unequip(Player player) {}
-
-    @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
-
-        // Making sure the player isn't on cooldown
-        if (CooldownManager.isOnCooldown(playerUUID, "thunder")) return;
-
-        // Applying effects for the thunder spark
-        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
-
+        if (CooldownManager.isOnCooldown(uuid, "thunder")) return;
+        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
-        CooldownManager.setTimes(playerUUID, "thunder", duration, cooldown);
+        CooldownManager.setTimes(uuid, "thunder", duration, cooldown);
 
         long durationTicks = duration * 20;
-        World world = player.getWorld();
+        World world = owner.getWorld();
 
         // TODO: make configs
         double baseRadius = 10;
@@ -108,7 +87,7 @@ public class Thunder extends InfuseEffect {
                 // Calculating the radius
                 double radius = baseRadius;
                 while (true) {
-                    long nearbyPlayers = world.getNearbyEntities(player.getLocation(), radius, radius, radius).stream().filter(p -> p instanceof Player).count();
+                    long nearbyPlayers = world.getNearbyEntities(owner.getLocation(), radius, radius, radius).stream().filter(p -> p instanceof Player).count();
                     double tmp = baseRadius + radiusBoostPerPlayer * nearbyPlayers;
                     if (tmp == radius) {
                         break;
@@ -118,16 +97,36 @@ public class Thunder extends InfuseEffect {
                 }
 
                 // Striking all players within the radius
-                for (Entity entity : world.getNearbyEntities(player.getLocation(), radius, radius, radius)) {
+                for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
                     if (!(entity instanceof Player target)) continue;
-                    if (plugin.getDataManager().isTrusted(target, player)) continue;
+                    if (plugin.getDataManager().isTrusted(target, owner)) continue;
 
-                    strikeLighting(target, player);
+                    strikeLighting(target, owner);
                 }
 
                 this.ticksElapsed += 20;
             }
         }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Thunder();
+    }
+
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Thunder(true);
+    }
+
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_THUNDER_NAME : Message.MessageType.THUNDER_NAME);
+    }
+
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_THUNDER_LORE : Message.MessageType.THUNDER_LORE);
     }
 
     /**
@@ -136,7 +135,7 @@ public class Thunder extends InfuseEffect {
      * @param target The entity to hit with a lightning bolt.
      * @param attacker The entity to attribute the damage to.
      */
-    public void strikeLighting(LivingEntity target, LivingEntity attacker) {
+    public static void strikeLighting(LivingEntity target, LivingEntity attacker) {
         target.getWorld().strikeLightningEffect(target.getLocation());
         target.damage(2, DamageSource.builder(DamageType.LIGHTNING_BOLT).withDirectEntity(attacker).build());
         target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
@@ -154,9 +153,9 @@ public class Thunder extends InfuseEffect {
     private void chainLightning(List<Player> targets) {
         if (targets == null) throw new InvalidParameterException("targets cannot be null");
         if (targets.size() == 11) return;
-        if (targets.size() < 1) throw new InvalidParameterException("targets list needs to have the attacker in the front");
+        if (targets.isEmpty()) throw new InvalidParameterException("targets list needs to have the attacker in the front");
 
-        Player attacker = targets.get(0);
+        Player attacker = targets.getFirst();
 
         // TODO: make config
         double radius = 3;
@@ -166,8 +165,7 @@ public class Thunder extends InfuseEffect {
             if (targets.contains(target)) continue;
 
             // Scheduling the lightning to strike the target 1 second after the next
-            
-            Bukkit.getScheduler().runTaskLater(plugin, () -> strikeLighting(target, attacker), 20 * (targets.size() - 1));
+            Bukkit.getScheduler().runTaskLater(plugin, () -> strikeLighting(target, attacker), 20L * (targets.size() - 1));
 
             // Adding the target to the list
             targets.add(target);
@@ -177,6 +175,9 @@ public class Thunder extends InfuseEffect {
             return;
         }
     }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     /**
      * Tracking the number of hits a player has.
@@ -253,16 +254,6 @@ public class Thunder extends InfuseEffect {
                 decayTask.run();
             }
         }, hitCounterDecaySeconds * 20);
-    }
-
-    /**
-     * Removes players from the hit tracker when they leave.
-     * 
-     * @param event A {@link PlayerQuitEvent}
-     */
-    @EventHandler
-    public void onPlayerLeave(PlayerQuitEvent event) {
-        hitTracker.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler

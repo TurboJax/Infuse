@@ -1,13 +1,11 @@
 package com.catadmirer.infuseSMP.effects;
 
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import java.util.UUID;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -22,69 +20,59 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.UUID;
+
 public class Fire extends InfuseEffect {
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
+    private final Infuse plugin;
 
     public Fire() {
-        super(EffectIds.FIRE, "fire", false);
+        this(false);
     }
 
     public Fire(boolean augmented) {
-        super(EffectIds.FIRE, "fire", augmented);
+        super("fire", EffectIds.FIRE, augmented, EffectConstants.potionColor(EffectIds.FIRE), EffectConstants.ritualColor(EffectIds.FIRE));
+
+        this.plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_FIRE_NAME : MessageType.FIRE_NAME);
+    public void equip(Player owner) {
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, -1, 0, false, false));
     }
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_FIRE_LORE : MessageType.FIRE_LORE);
+    public void unequip(Player owner) {
+        owner.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
     }
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Fire(true);
-    }
+    public void applyPassives(Player owner) {}
 
     @Override
-    public InfuseEffect getRegularForm() {
-        return new Fire(false);
-    }
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
 
-    @Override
-    public void equip(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, PotionEffect.INFINITE_DURATION, 0, false, false));
-    }
-
-    @Override
-    public void unequip(Player player) {
-        player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
-    }
-
-    @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
-
-        // Making sure the player isn't on cooldown
         if (CooldownManager.isOnCooldown(playerUUID, "fire")) return;
 
-        // Applying effects for the fire spark
-        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1, 1);
 
-        for (Entity entity : player.getNearbyEntities(5, 5, 5)) {
-            if (entity instanceof LivingEntity && entity != player) {
+        for (Entity entity : owner.getNearbyEntities(5, 5, 5)) {
+            if (entity instanceof LivingEntity && entity != owner) {
                 entity.setFireTicks(100);
             }
         }
 
-        fireSparkEffect(player);
+        spawnSparkEffect(owner);
+        new BukkitRunnable() {
+            public void run() {
+                owner.getWorld().spawnParticle(Particle.EXPLOSION, owner.getLocation(), 1);
+            }
+        }.runTaskLater(plugin, 20L);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -93,70 +81,105 @@ public class Fire extends InfuseEffect {
         CooldownManager.setTimes(playerUUID, "fire", duration, cooldown);
     }
 
-    private final void fireSparkEffect(Player caster) {
-        Bukkit.getScheduler().runTaskLater(plugin, () -> stage0(caster), 20);
-        for (int i = 0; i < 5; i++) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> stage1(caster), 20 * (i + 1));
-        }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> stage2(caster), 100);
-        for (int i = 1; i < 11; i++) {
-            final int j = i;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> stage3(caster, j), 100 + j);
-        }
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Fire();
     }
 
-    private final void stage0(Player player) {
-        player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 1);
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Fire(true);
     }
 
-    private final void stage1(Player caster) {
-        Location center = caster.getLocation();
-        World world = center.getWorld();
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_FIRE_NAME : Message.MessageType.FIRE_NAME);
+    }
 
-        world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_FIRE_LORE : Message.MessageType.FIRE_LORE);
+    }
 
-        for(int angle = 0; angle < 360; angle += 20) {
-            double rad = Math.toRadians(angle);
-            double offsetX = 5 * Math.cos(rad);
-            double offsetZ = 5 * Math.sin(rad);
-            Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
-            world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
-        }
+    private void spawnSparkEffect(final Player caster) {
+        (new BukkitRunnable() {
+            int tick = 0;
 
-        for (Player target : world.getPlayers()) {
-            if (!target.equals(caster) && target.getLocation().distance(center) <= 5) {
-                target.damage(8, caster);
+            public void run() {
+                if (this.tick >= 100) {
+                    startDarkRedDustEffect(caster.getLocation(), caster);
+                    this.cancel();
+                    return;
+                }
+
+                Location center = caster.getLocation();
+                World world = center.getWorld();
+                if (this.tick > 0 && this.tick % 20 == 0) {
+                    world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
+
+                    for(int angle = 0; angle < 360; angle += 20) {
+                        double rad = Math.toRadians(angle);
+                        double offsetX = 5 * Math.cos(rad);
+                        double offsetZ = 5 * Math.sin(rad);
+                        Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
+                        world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
+                    }
+
+                    for (Player target : world.getPlayers()) {
+                        if (!target.equals(caster) && target.getLocation().distance(center) <= 5) {
+                            target.damage(8, caster);
+                        }
+                    }
+                }
+
+                ++this.tick;
             }
-        }
+        }).runTaskTimer(plugin, 0L, 1L);
     }
 
-    private final void stage2(Player player) {
-        final World world = player.getWorld();
+    private void startDarkRedDustEffect(final Location startLoc, Player caster) {
+        final World world = startLoc.getWorld();
         double explosionRadius = 5;
         for (Player target : world.getPlayers()) {
-            if (!target.equals(player) && target.getLocation().distance(player.getLocation()) <= explosionRadius) {
+            if (!target.equals(caster) && target.getLocation().distance(startLoc) <= explosionRadius) {
                 target.setVelocity(new Vector(0, 2, 0));
             }
         }
 
-        world.playSound(player, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
+        world.playSound(startLoc, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
+        (new BukkitRunnable() {
+            int tick = 0;
+
+            public void run() {
+                if (this.tick >= 60) {
+                    this.cancel();
+                    return;
+                }
+
+                double baseRadius = 5;
+                double spreadFactor = this.tick * 0.1;
+                double circleRadius = baseRadius + spreadFactor;
+                double particleHeightOffset = this.tick * 3;
+                if (particleHeightOffset > 30) {
+                    this.cancel();
+                    return;
+                }
+
+                for(int angle = 0; angle < 360; ++angle) {
+                    double rad = Math.toRadians(angle);
+                    double offsetX = circleRadius * Math.cos(rad);
+                    double offsetZ = circleRadius * Math.sin(rad);
+                    Location particleLoc = startLoc.clone().add(offsetX, particleHeightOffset, offsetZ);
+                    world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
+                }
+
+                ++this.tick;
+            }
+        }).runTaskTimer(plugin, 0L, 1L);
     }
 
-    private static void stage3(Player player, int iteration) {
-        World world = player.getWorld();
-        
-        double baseRadius = 5;
-        double spreadFactor = iteration * 0.1;
-        double circleRadius = baseRadius + spreadFactor;
-        double particleHeightOffset = iteration * 3;
-        for(int angle = 0; angle < 360; ++angle) {
-            double rad = Math.toRadians(angle);
-            double offsetX = circleRadius * Math.cos(rad);
-            double offsetZ = circleRadius * Math.sin(rad);
-            Location particleLoc = player.getLocation().clone().add(offsetX, particleHeightOffset, offsetZ);
-            world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
-        }
-    }
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {

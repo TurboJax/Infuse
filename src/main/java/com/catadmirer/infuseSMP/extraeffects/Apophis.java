@@ -1,14 +1,12 @@
 package com.catadmirer.infuseSMP.extraeffects;
 
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.Message.MessageType;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.ItemUtil;
-import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import java.time.Duration;
-import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -28,111 +26,86 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+
+import java.time.Duration;
+import java.util.UUID;
 
 public class Apophis extends InfuseEffect {
     public static final NamespacedKey apophisBoost = new NamespacedKey("infuse", "apophis_boost");
     public static final NamespacedKey apophisSparkBoost = new NamespacedKey("infuse", "apophis_spark_boost");
 
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
+    private final Infuse plugin;
 
     public Apophis() {
-        super(EffectIds.APOPHIS, "apophis", false);
+        this(false);
     }
 
     public Apophis(boolean augmented) {
-        super(EffectIds.APOPHIS, "apophis", augmented);
+        super("apophis", EffectIds.APOPHIS, augmented, EffectConstants.potionColor(EffectIds.APOPHIS), EffectConstants.ritualColor(EffectIds.APOPHIS));
+
+        this.plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_APOPHIS_NAME : MessageType.APOPHIS_NAME);
+    public void equip(Player owner) {
+        AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
+        attribute.addModifier(new AttributeModifier(apophisBoost, 10, Operation.ADD_NUMBER));
+        owner.heal(10);
+
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, -1, 9, false, false));
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, -1, 2, false, false));
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, -1, 2, false, false));
     }
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_APOPHIS_LORE : MessageType.APOPHIS_LORE);
+    public void unequip(Player owner) {
+        AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
+        attribute.removeModifier(apophisBoost);
+
+        owner.removePotionEffect(PotionEffectType.LUCK);
+        owner.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
+        owner.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
     }
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Apophis(true);
-    }
-
-    @Override
-    public InfuseEffect getRegularForm() {
-        return new Apophis(false);
-    }
-
-    @Override
-    public void equip(Player player) {
-        AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
-        
-        // Doubling the strength if the user already has the modifier active
-        int healthBoost = (maxHealth.getModifier(apophisBoost) != null) ? 20 : 10;
-        AttributeModifier healthModifier = new AttributeModifier(apophisBoost, healthBoost, Operation.ADD_NUMBER);
-        
-        maxHealth.addModifier(healthModifier);
-        player.heal(healthBoost);
-
-        // TODO: Move to an event listener
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
+    public void applyPassives(Player owner) {
+        // TODO: Move to PlayerHeldItemEvent listener
+        ItemStack mainHand = owner.getInventory().getItemInMainHand();
         if (ItemUtil.isSword(mainHand) && mainHand.getEnchantmentLevel(Enchantment.LOOTING) < 5) {
             mainHand.addUnsafeEnchantment(Enchantment.LOOTING, 5);
         }
-
-        player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, PotionEffect.INFINITE_DURATION, 9, false, false));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, PotionEffect.INFINITE_DURATION, 2, false, false));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, PotionEffect.INFINITE_DURATION, 2, false, false));
-    }
-    
-    @Override
-    public void unequip(Player player) {
-        AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
-        AttributeModifier healthModifier = maxHealth.getModifier(apophisBoost);
-
-        // Ignoring players who dont have the modifier
-        if (healthModifier == null) return;
-
-        // Removing the modifier
-        maxHealth.removeModifier(apophisBoost);
-
-        // Checking if the modifier was applied twice and adding it back if it was.
-        if (healthModifier.getAmount() > 10) {
-            healthModifier = new AttributeModifier(apophisBoost, 10, Operation.ADD_NUMBER);
-            maxHealth.addModifier(healthModifier);
-        }
-
-        player.removePotionEffect(PotionEffectType.LUCK);
-        player.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
-        player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
     }
 
     @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
         if (!CooldownManager.isOnCooldown(playerUUID, "apophis")) {
-            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 600, 254));
-            for (Entity entity : player.getNearbyEntities(5, 5, 5)) {
-                if (entity instanceof LivingEntity && entity != player) {
+            owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+            owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 600, 254));
+            for (Entity entity : owner.getNearbyEntities(5, 5, 5)) {
+                if (entity instanceof LivingEntity && entity != owner) {
                     entity.setFireTicks(100);
                 }
             }
 
-            fireSparkEffect(player);
+            spawnSparkEffect(owner);
+            (new BukkitRunnable() {
+                public void run() {
+                owner.getWorld().spawnParticle(Particle.EXPLOSION, owner.getLocation(), 1);
+                }
+            }).runTaskLater(plugin, 20L);
 
-            AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
+            AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
             if (attribute.getModifier(apophisSparkBoost) == null) {
                 attribute.addModifier(new AttributeModifier(apophisSparkBoost, 10, Operation.ADD_NUMBER));
-                player.heal(10);
+                owner.heal(10);
             }
-            
+
             // Applying cooldowns and durations for the effect
             long cooldown = plugin.getMainConfig().cooldown(this);
             long duration = plugin.getMainConfig().duration(this);
@@ -143,70 +116,105 @@ public class Apophis extends InfuseEffect {
         }
     }
 
-    private final void fireSparkEffect(Player caster) {
-        Bukkit.getScheduler().runTaskLater(plugin, () -> stage0(caster), 20);
-        for (int i = 0; i < 5; i++) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> stage1(caster), 20 * (i + 1));
-        }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> stage2(caster), 100);
-        for (int i = 1; i < 11; i++) {
-            final int j = i;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> stage3(caster, j), 100 + j);
-        }
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Apophis();
     }
 
-    private final void stage0(Player player) {
-        player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 1);
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Apophis(true);
     }
 
-    private final void stage1(Player caster) {
-        Location center = caster.getLocation();
-        World world = center.getWorld();
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_APOPHIS_NAME : Message.MessageType.APOPHIS_NAME);
+    }
 
-        world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_APOPHIS_LORE : Message.MessageType.APOPHIS_LORE);
+    }
 
-        for(int angle = 0; angle < 360; angle += 20) {
-            double rad = Math.toRadians(angle);
-            double offsetX = 5 * Math.cos(rad);
-            double offsetZ = 5 * Math.sin(rad);
-            Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
-            world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
-        }
+    private void spawnSparkEffect(final Player caster) {
+        (new BukkitRunnable() {
+            int tick = 0;
 
-        for (Player target : world.getPlayers()) {
-            if (!target.equals(caster) && target.getLocation().distance(center) <= 5) {
-                target.damage(8, caster);
+            public void run() {
+                if (this.tick >= 100) {
+                    startDarkRedDustEffect(caster.getLocation(), caster);
+                    this.cancel();
+                    return;
+                }
+
+                Location center = caster.getLocation();
+                World world = center.getWorld();
+                if (this.tick > 0 && this.tick % 20 == 0) {
+                    world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
+
+                    for (int angle = 0; angle < 360; angle += 20) {
+                        double rad = Math.toRadians(angle);
+                        double offsetX = 5 * Math.cos(rad);
+                        double offsetZ = 5 * Math.sin(rad);
+                        Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
+                        world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
+                    }
+
+                    for (Player target : world.getPlayers()) {
+                        if (!target.equals(caster) && target.getLocation().distance(center) <= 5) {
+                            target.damage(8, caster);
+                        }
+                    }
+                }
+
+                this.tick++;
             }
-        }
+        }).runTaskTimer(plugin, 0L, 1L);
     }
 
-    private final void stage2(Player player) {
-        final World world = player.getWorld();
+    private void startDarkRedDustEffect(final Location startLoc, Player caster) {
+        final World world = startLoc.getWorld();
         double explosionRadius = 5;
         for (Player target : world.getPlayers()) {
-            if (!target.equals(player) && target.getLocation().distance(player.getLocation()) <= explosionRadius) {
+            if (!target.equals(caster) && target.getLocation().distance(startLoc) <= explosionRadius) {
                 target.setVelocity(new Vector(0, 2, 0));
             }
         }
 
-        world.playSound(player, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
+        world.playSound(startLoc, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
+        (new BukkitRunnable() {
+            int tick = 0;
+
+            public void run() {
+                if (this.tick >= 60) {
+                    this.cancel();
+                    return;
+                }
+
+                double baseRadius = 5;
+                double spreadFactor = this.tick * 0.1;
+                double circleRadius = baseRadius + spreadFactor;
+                double particleHeightOffset = this.tick * 3;
+                if (particleHeightOffset > 30) {
+                    this.cancel();
+                    return;
+                }
+
+                for(int angle = 0; angle < 360; ++angle) {
+                    double rad = Math.toRadians(angle);
+                    double offsetX = circleRadius * Math.cos(rad);
+                    double offsetZ = circleRadius * Math.sin(rad);
+                    Location particleLoc = startLoc.clone().add(offsetX, particleHeightOffset, offsetZ);
+                    world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
+                }
+
+                ++this.tick;
+            }
+        }).runTaskTimer(plugin, 0, 1);
     }
 
-    private static void stage3(Player player, int iteration) {
-        World world = player.getWorld();
-        
-        double baseRadius = 5;
-        double spreadFactor = iteration * 0.1;
-        double circleRadius = baseRadius + spreadFactor;
-        double particleHeightOffset = iteration * 3;
-        for(int angle = 0; angle < 360; ++angle) {
-            double rad = Math.toRadians(angle);
-            double offsetX = circleRadius * Math.cos(rad);
-            double offsetZ = circleRadius * Math.sin(rad);
-            Location particleLoc = player.getLocation().clone().add(offsetX, particleHeightOffset, offsetZ);
-            world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
-        }
-    }
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent event) {
@@ -218,12 +226,5 @@ public class Apophis extends InfuseEffect {
                 target.showTitle(Title.title(Component.text("\uE090"), Component.empty(), Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ZERO)));
             }
         }
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        AttributeInstance maxHealth = event.getPlayer().getAttribute(Attribute.MAX_HEALTH);
-        maxHealth.removeModifier(apophisBoost);
-        maxHealth.removeModifier(apophisSparkBoost);
     }
 }

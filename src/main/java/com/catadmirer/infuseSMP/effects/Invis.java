@@ -1,81 +1,69 @@
 package com.catadmirer.infuseSMP.effects;
 
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
-import org.bukkit.Particle.DustOptions;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.Particle.DustOptions;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class Invis extends InfuseEffect {
-    private static final MiniMessage mm = MiniMessage.miniMessage();
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
-    
+public class Invis extends InfuseEffect {
+    public static final MiniMessage mm = MiniMessage.miniMessage();
+
+    private final Infuse plugin;
+
     public Invis() {
-        super(EffectIds.INVIS, "invis", false);
+        this(false);
     }
 
     public Invis(boolean augmented) {
-        super(EffectIds.INVIS, "invis", augmented);
+        super("invis", EffectIds.INVIS, augmented, EffectConstants.potionColor(EffectIds.INVIS), EffectConstants.ritualColor(EffectIds.INVIS));
+
+        this.plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_INVIS_NAME : MessageType.INVIS_NAME);
+    public void equip(Player owner) {
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, -1, 0, false, false));
     }
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_INVIS_LORE : MessageType.INVIS_LORE);
+    public void unequip(Player owner) {
+        owner.removePotionEffect(PotionEffectType.INVISIBILITY);
     }
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Invis(true);
-    }
+    public void applyPassives(Player owner) {}
 
     @Override
-    public InfuseEffect getRegularForm() {
-        return new Invis(false);
-    }
-
-    @Override
-    public void equip(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, -1, 0, false, false));
-    }
-
-    @Override
-    public void unequip(Player player) {}
-
-    @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
         if (CooldownManager.isOnCooldown(playerUUID, "invis")) return;
 
-        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
-                    
+        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
@@ -84,11 +72,11 @@ public class Invis extends InfuseEffect {
 
         final double radius = 10;
         final long durationTicks = duration * 20;
-        final World world = player.getWorld();
+        final World world = owner.getWorld();
         final Set<Player> vanishedPlayers = new HashSet<>();
 
-        for (Player p : player.getWorld().getPlayers()) {
-            if (player.getLocation().distance(p.getLocation()) <= radius && plugin.getDataManager().isTrusted(player, p)) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getWorld().equals(world) && player.getLocation().distance(owner.getLocation()) <= radius && plugin.getDataManager().isTrusted(owner, player)) {
                 vanishedPlayers.add(player);
             }
         }
@@ -114,7 +102,7 @@ public class Invis extends InfuseEffect {
                     }
 
                 } else {
-                    Location center = player.getLocation();
+                    Location center = owner.getLocation();
 
                     for(int angle = 0; angle < 360; angle += 2) {
                         double rad = Math.toRadians(angle);
@@ -131,7 +119,7 @@ public class Invis extends InfuseEffect {
                     }
 
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p.getWorld().equals(world) && p.getLocation().distance(center) <= radius && !plugin.getDataManager().isTrusted(p, player)) {
+                        if (p.getWorld().equals(world) && p.getLocation().distance(center) <= radius && !plugin.getDataManager().isTrusted(p, owner)) {
                             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false));
                         }
                     }
@@ -141,6 +129,45 @@ public class Invis extends InfuseEffect {
             }
         }).runTaskTimer(plugin, 0L, 10L);
     }
+
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Invis();
+    }
+
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Invis(true);
+    }
+
+    @Override
+    public Message getName() {
+        return new Message(augmented ? MessageType.AUG_INVIS_NAME : MessageType.INVIS_NAME);
+    }
+
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? MessageType.AUG_INVIS_LORE : MessageType.INVIS_LORE);
+    }
+
+    private void spawnBlackParticles(final Player target, final int durationInSeconds) {
+        (new BukkitRunnable() {
+            int ticksElapsed = 0;
+            final int maxTicks = durationInSeconds * 20;
+
+            public void run() {
+                if (this.ticksElapsed >= this.maxTicks) {
+                    this.cancel();
+                } else {
+                    target.getWorld().spawnParticle(Particle.SQUID_INK, target.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
+                    this.ticksElapsed += 5;
+                }
+            }
+        }).runTaskTimer(plugin, 0L, 5L);
+    }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
@@ -188,22 +215,6 @@ public class Invis extends InfuseEffect {
         Player target = event.getTarget();
         target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0, false, false));
         this.spawnBlackParticles(target, 4);
-    }
-
-    private void spawnBlackParticles(final Player target, final int durationInSeconds) {
-        (new BukkitRunnable() {
-            int ticksElapsed = 0;
-            final int maxTicks = durationInSeconds * 20;
-
-            public void run() {
-                if (this.ticksElapsed >= this.maxTicks) {
-                    this.cancel();
-                } else {
-                    target.getWorld().spawnParticle(Particle.SQUID_INK, target.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
-                    this.ticksElapsed += 5;
-                }
-            }
-        }).runTaskTimer(plugin, 0L, 5L);
     }
 
     @EventHandler

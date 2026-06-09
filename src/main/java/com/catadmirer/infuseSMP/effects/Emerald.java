@@ -61,7 +61,7 @@ public class Emerald extends InfuseEffect {
     }
 
     public Emerald(boolean augmented) {
-        super("emerald", EffectIds.EMERALD, augmented, EffectConstants.potionColor(EffectIds.EMERALD), EffectConstants.bossBarColor(EffectIds.EMERALD));
+        super("emerald", EffectIds.EMERALD, augmented, EffectConstants.potionColor(EffectIds.EMERALD), EffectConstants.ritualColor(EffectIds.EMERALD));
         plugin = Infuse.getInstance();
     }
 

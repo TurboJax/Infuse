@@ -1,13 +1,12 @@
 package com.catadmirer.infuseSMP.effects;
 
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
-import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -27,71 +26,80 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
+import java.util.UUID;
+
 public class Feather extends InfuseEffect {
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
+    private final Infuse plugin;
 
     public Feather() {
-        super(EffectIds.FEATHER, "feather", false);
+        this(false);
     }
 
     public Feather(boolean augmented) {
-        super(EffectIds.FEATHER, "feather", augmented);
+        super("feather", EffectIds.FEATHER, augmented, EffectConstants.potionColor(EffectIds.FEATHER), EffectConstants.ritualColor(EffectIds.FEATHER));
+
+        this.plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_FEATHER_NAME : MessageType.FEATHER_NAME);
-    }
+    public void equip(Player owner) {}
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_FEATHER_LORE : MessageType.FEATHER_LORE);
-    }
+    public void unequip(Player owner) {}
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Feather(true);
-    }
+    public void applyPassives(Player owner) {}
 
     @Override
-    public InfuseEffect getRegularForm() {
-        return new Feather(false);
-    }
-
-    @Override
-    public void equip(Player player) {}
-
-    @Override
-    public void unequip(Player player) {}
-
-    @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
 
         if (CooldownManager.isOnCooldown(playerUUID, "feather")) return;
 
-        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
-        ParticleManager.spawnEffectCloud(player, Color.fromRGB(0xBEA3CA));
-        Vector dashDirection = player.getEyeLocation().getDirection().normalize();
+        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        ParticleManager.spawnEffectCloud(owner, Color.fromRGB(0xBEA3CA));
+        Vector dashDirection = owner.getEyeLocation().getDirection().normalize();
         Vector launchVector = dashDirection.multiply(0).setY(1);
-        player.setVelocity(launchVector);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 10));
-        
+        owner.setVelocity(launchVector);
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 10));
+
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
         CooldownManager.setTimes(playerUUID, "feather", duration, cooldown);
 
-        player.getScheduler().runDelayed(plugin, t -> {
+        owner.getScheduler().runDelayed(plugin, t -> {
             CooldownManager.setDuration(playerUUID, "feathermace", 5L);
         }, null, 10);
     }
+
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Feather();
+    }
+
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Feather(true);
+    }
+
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_FEATHER_NAME : Message.MessageType.FEATHER_NAME);
+    }
+
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_FEATHER_LORE : Message.MessageType.FEATHER_LORE);
+    }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     @EventHandler
     public void FeatherLand(PlayerMoveEvent event) {
@@ -113,10 +121,8 @@ public class Feather extends InfuseEffect {
                 Vector knockback = new Vector(0, 1, 0);
                 target.setVelocity(target.getVelocity().add(knockback));
                 Location anchor = target.getLocation();
-                LivingEntity finalTarget = target;
                 Bukkit.getRegionScheduler().run(plugin, anchor, (task) -> {
-                    finalTarget.addPotionEffect(
-                            new PotionEffect(PotionEffectType.SLOW_FALLING, 80, 0, false, false, false));
+                    target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 80, 0, false, false, false));
                 });
             }
 
@@ -179,7 +185,7 @@ public class Feather extends InfuseEffect {
     public void onWindChargeLaunch(ProjectileLaunchEvent event) {
         if (!(event.getEntity() instanceof WindCharge windCharge)) return;
         if (!(windCharge.getShooter() instanceof Player player)) return;
-
+        
         Vector direction = player.getEyeLocation().getDirection().normalize().multiply(2);
         windCharge.setVelocity(direction);
     }
