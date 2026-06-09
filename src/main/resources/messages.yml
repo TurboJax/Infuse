@@ -47,8 +47,8 @@ infuse_seteffect_success: "<green>Successfully set the effect in slot %slot% of 
 infuse_giveeffect_usage: "<red>Invalid Argument! Please use /infuse giveEffect <player> <aug_fire|ocean>"
 infuse_giveeffect_success: "%effect_color%You recieved the %effect_name%"
 
-infuse_cleareffect_usage: "<red>Invalid Argument! Please use /infuse clearEffect <player>"
-infuse_cleareffect_success: "<green>Cleared %player_name%'s effects"
+infuse_cleareffects_usage: "<red>Invalid Argument! Please use /infuse clearEffects <player>"
+infuse_cleareffects_success: "<green>Cleared %player_name%'s effects"
 
 infuse_cooldown_usage: "<red>Invalid Argument! Please use /infuse cooldown <player>"
 infuse_cooldown_success: "<green>Removed %player_name%'s cooldown"

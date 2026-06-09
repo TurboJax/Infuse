@@ -155,7 +155,7 @@ public class Frost extends InfuseEffect {
 
                     // Changing the block to regular snow
                     powderSnowBlock.setType(Material.SNOW_BLOCK);
-                    
+
                     // This may cause powdered snow to permanently become snow if the server shuts down.
                     Bukkit.getScheduler().runTaskTimer(plugin, task -> {
                         // Skipping if the player is too close to the block

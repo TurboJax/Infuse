@@ -15,3 +15,7 @@
 - The hit tracker's decay rate is now configurable.  Check the config.yml for more info
 - Thunder effect is accurate now
 - Fixed an issue with the hit tracker where hit counts were counted wrong.
+- Fixed /cleareffects
+- Made dropped heads match the player they drop from
+- Frost can now stand on powder snow
+- Emerald enchant bonus works

@@ -11,7 +11,7 @@ commands:
   controls:
     description: Toggle controls between offhand and mainhand.
     usage: /controls
-  cleareffect:
+  cleareffects:
     description: Clear all effects from a player.
     usage: /cleareffects <player>
     permission: op
