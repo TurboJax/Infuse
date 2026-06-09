@@ -1,9 +1,9 @@
 package com.catadmirer.infuseSMP.effects;
 
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.WeightedRandom;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -11,24 +11,20 @@ import com.catadmirer.infuseSMP.util.ItemUtil;
 import com.destroystokyo.paper.event.player.PlayerPickupExperienceEvent;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Enchantable;
-import io.papermc.paper.registry.RegistryAccess;
-import io.papermc.paper.registry.RegistryKey;
-import io.papermc.paper.registry.TypedKey;
-import io.papermc.paper.registry.keys.tags.EnchantmentTagKeys;
-import io.papermc.paper.registry.set.RegistryKeySet;
-import io.papermc.paper.registry.tag.Tag;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.stream.Stream;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.world.inventory.EnchantmentMenu;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
-import org.bukkit.Registry;
 import org.bukkit.Sound;
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.enchantments.CraftEnchantment;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.inventory.view.CraftEnchantmentView;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentOffer;
 import org.bukkit.entity.ExperienceOrb;
@@ -39,77 +35,102 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ItemType;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.RecordComponent;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 public class Emerald extends InfuseEffect {
     public static final NamespacedKey LOOTING_KEY = new NamespacedKey("infuse", "emerald_looting");
 
-    private final Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
+    private final Infuse plugin;
 
     public Emerald() {
-        super(EffectIds.EMERALD, "emerald", false);
+        this(false);
     }
 
     public Emerald(boolean augmented) {
-        super(EffectIds.EMERALD, "emerald", augmented);
+        super("emerald", EffectIds.EMERALD, augmented, EffectConstants.potionColor(EffectIds.EMERALD), EffectConstants.bossBarColor(EffectIds.EMERALD));
+        plugin = Infuse.getInstance();
     }
 
     @Override
-    public Message getItemName() {
-        return new Message(augmented ? MessageType.AUG_EMERALD_NAME : MessageType.EMERALD_NAME);
+    public void equip(Player owner) {
+        // Applying the potion effect to the player
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, -1, 2, false, false));
     }
 
     @Override
-    public Message getItemLore() {
-        return new Message(augmented ? MessageType.AUG_EMERALD_LORE : MessageType.EMERALD_LORE);
+    public void unequip(Player owner) {
+        // Removing the potion effect
+        owner.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
+
+        // Removing enchanted items from the owner's inventory
+        for (ItemStack item : owner.getInventory()) {
+            if (item == null || item.getType() == Material.AIR) continue;
+
+            ItemUtil.removeSpecialEnchant(item, Emerald.LOOTING_KEY, Enchantment.LOOTING);
+        }
     }
 
     @Override
-    public InfuseEffect getAugmentedForm() {
-        return new Emerald(true);
-    }
+    public void applyPassives(Player owner) {}
 
     @Override
-    public InfuseEffect getRegularForm() {
-        return new Emerald(false);
-    }
-
-    @Override
-    public void equip(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, PotionEffect.INFINITE_DURATION, 2, false, false));
-    }
-
-    @Override
-    public void unequip(Player player) {
-        player.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
-    }
-
-    @Override
-    public void activateSpark(Player player) {
-        UUID playerUUID = player.getUniqueId();
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
 
         // Making sure the player isn't on cooldown
         if (CooldownManager.isOnCooldown(playerUUID, "emerald")) return;
 
         // Applying effects for the emerald spark
-        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, (int) duration * 20, 4));
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, (int) duration * 20, 4));
 
         CooldownManager.setTimes(playerUUID, "emerald", duration, cooldown);
     }
 
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Emerald();
+    }
+
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Emerald(true);
+    }
+
+    @Override
+    public Message getName() {
+        return new Message(augmented ? MessageType.AUG_EMERALD_NAME : MessageType.EMERALD_NAME);
+    }
+
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? MessageType.AUG_EMERALD_LORE : MessageType.EMERALD_LORE);
+    }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
+
     @EventHandler
-    public void onPlayerHoldItem(PlayerItemHeldEvent event) {
+    public void enchantHeldItem(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
 
@@ -120,8 +141,24 @@ public class Emerald extends InfuseEffect {
     }
 
     @EventHandler
+    public void removeLootingWhenStored(InventoryCloseEvent event) {
+        if (event.getView().getType() == InventoryType.PLAYER) return;
+
+        for (ItemStack item : event.getView().getTopInventory().getContents()) {
+            if (item == null || item.getType() == Material.AIR) continue;
+
+            ItemUtil.removeSpecialEnchant(item, Emerald.LOOTING_KEY, Enchantment.LOOTING);
+        }
+    }
+
+    @EventHandler
+    public void removeLootingWhenDropped(PlayerDropItemEvent event) {
+        ItemUtil.removeSpecialEnchant(event.getItemDrop().getItemStack(), Emerald.LOOTING_KEY, Enchantment.LOOTING);
+    }
+
+    @EventHandler
     public void tenHitEvent(TenHitEvent event) {
-        Infuse.LOGGER.debug("[Emerald] Recieved TenHitEvent");
+        Infuse.LOGGER.debug("[Emerald] Received TenHitEvent");
         Infuse.LOGGER.debug("[Emerald] Attacker: {}", event.getAttacker().getName());
         Infuse.LOGGER.debug("[Emerald] Target: {}", event.getTarget().getName());
 
@@ -133,12 +170,11 @@ public class Emerald extends InfuseEffect {
         new FoodAndExpLock(event.getAttacker(), plugin.getMainConfig().emeraldLockDurationSeconds());
     }
 
-    public static class FoodAndExpLock implements Listener {
+    public class FoodAndExpLock implements Listener {
         private final Player player;
 
         public FoodAndExpLock(Player player, double durationSeconds) {
             this.player = player;
-            Infuse plugin = JavaPlugin.getPlugin(Infuse.class);
 
             Bukkit.getPluginManager().registerEvents(this, plugin);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -149,7 +185,7 @@ public class Emerald extends InfuseEffect {
 
         /** Preventing the player's food level from changing. */
         @EventHandler
-        public void onFoodChange(FoodLevelChangeEvent event) {
+        public void preventFoodChange(FoodLevelChangeEvent event) {
             if (event.getEntity().getUniqueId().equals(player.getUniqueId())) {
                 event.setCancelled(true);
             }
@@ -157,10 +193,17 @@ public class Emerald extends InfuseEffect {
 
         /** Preventing the player's exp level from changing. */
         @EventHandler
-        public void onExpChange(PlayerExpChangeEvent event) {
+        public void preventExpChange(PlayerExpChangeEvent event) {
             if (event.getPlayer().getUniqueId().equals(player.getUniqueId())) {
                 event.setAmount(0);
             }
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof FoodAndExpLock other)) return false;
+
+            return other.player.getUniqueId().equals(player.getUniqueId());
         }
     }
 
@@ -182,89 +225,6 @@ public class Emerald extends InfuseEffect {
         orb.setExperience(newAmount);
     }
 
-    public static record EnchantInstance(Enchantment enchantment, int level) {}
-
-    public static int getEnchantmentCost(Random random, int slot, ItemStack item) {
-        Enchantable enchantable = item.getData(DataComponentTypes.ENCHANTABLE);
-        if (enchantable == null) return 0;
-
-        int i = random.nextInt(8) + 8 + random.nextInt(16);
-        
-        if (slot == 0) return Math.max(i / 3, 1);
-
-        return slot == 1 ? i * 2 / 3 + 1 : Math.max(i, 30);
-    }
-
-    private List<EnchantInstance> getEnchantmentList(Player player, ItemStack item, int index, int baseCost, Random random) {
-        random.setSeed(player.getEnchantmentSeed() + index);
-        Registry<Enchantment> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT);
-        Tag<Enchantment> allEnchantments = registry.getTag(EnchantmentTagKeys.IN_ENCHANTING_TABLE);
-        if (allEnchantments.isEmpty()) return List.of();
-
-        List<EnchantInstance> enchants = selectEnchantment(random, item, baseCost, allEnchantments.resolve(registry).stream());
-        if (item.getType() == Material.BOOK && enchants.size() > 1) {
-            enchants.remove(random.nextInt(enchants.size()));
-        }
-
-        return enchants;
-    }
-
-    public static List<EnchantInstance> selectEnchantment(Random random, ItemStack item, int cost, Stream<Enchantment> allEnchantments) {
-
-        Enchantable enchantable = item.getData(DataComponentTypes.ENCHANTABLE);
-        if (enchantable == null) return List.of();
-
-        cost += 1 + random.nextInt(enchantable.value() / 4 + 1) + random.nextInt(enchantable.value() / 4 + 1);
-        float f = (random.nextFloat() + random.nextFloat() - 1.0F) * 0.15F;
-        cost = Math.clamp(Math.round(cost + cost * f), 1, Integer.MAX_VALUE);
-        List<EnchantInstance> availableEnchants = getAvailableEnchantmentResults(cost, item, allEnchantments);
-        if (availableEnchants.isEmpty()) return List.of();
-
-        List<EnchantInstance> selectedEnchantments = new ArrayList<>();
-        selectedEnchantments.add(WeightedRandom.getRandomItem(random, availableEnchants, e -> e.enchantment.getWeight()));
-
-        while (random.nextInt(50) <= cost) {
-            // Filtering incompatible enchantments
-            if (!selectedEnchantments.isEmpty()) {
-                filterCompatibleEnchantments(availableEnchants, selectedEnchantments.getLast());
-            }
-
-            if (availableEnchants.isEmpty()) break;
-
-            selectedEnchantments.add(WeightedRandom.getRandomItem(random, availableEnchants, e -> e.enchantment.getWeight()));
-            cost /= 2;
-        }
-
-        return selectedEnchantments;
-    }
-
-    public static void filterCompatibleEnchantments(List<EnchantInstance> enchantments, EnchantInstance enchant) {
-        enchantments.removeIf(e -> enchant.enchantment().conflictsWith(e.enchantment()));
-    }
-
-    public static List<EnchantInstance> getAvailableEnchantmentResults(int cost, ItemStack item, Stream<Enchantment> allEnchantments) {
-        List<EnchantInstance> list = new ArrayList<>();
-        boolean flag = item.getType() == Material.BOOK;
-        allEnchantments.filter(ench -> {
-            if (flag) return true;
-
-            RegistryKeySet<ItemType> primaryItems = ench.getPrimaryItems();
-            if (primaryItems == null) {
-                primaryItems = ench.getSupportedItems();
-            }
-
-            return primaryItems.contains(TypedKey.create(RegistryKey.ITEM, item.getType().key()));
-        }).forEach(e -> {
-            for (int i = e.getMaxLevel(); i >= 1; i--) {
-                if (cost >= e.getMinModifiedCost(i) && cost <= e.getMaxModifiedCost(i)) {
-                    list.add(new EnchantInstance(e, i));
-                    break;
-                }
-            }
-        });
-        return list;
-    }
-
     @EventHandler
     public void emeraldEnchantBonus(PrepareItemEnchantEvent event) {
         ItemStack item = event.getItem();
@@ -279,14 +239,12 @@ public class Emerald extends InfuseEffect {
         Player player = event.getEnchanter();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
 
-        // mojang impl:
         EnchantmentOffer[] offers = event.getOffers();
-
         Random random = new Random(player.getEnchantmentSeed());
 
         // Calculating the costs
-        for (int k = 0; k < 3; k++) {
-            int cost = -1;
+        for (int    k = 0; k < 3; k++) {
+            int cost;
 
             Enchantable enchantable = item.getData(DataComponentTypes.ENCHANTABLE);
             if (enchantable == null) {
@@ -295,7 +253,8 @@ public class Emerald extends InfuseEffect {
             }
 
             int i = random.nextInt(1, 9) + 7 + random.nextInt(0, 16);
-            
+
+            // Calculating cose
             if (k == 0) {
                 cost = Math.max(i / 3, 1);
             } else if (k == 1) {
@@ -309,15 +268,39 @@ public class Emerald extends InfuseEffect {
                 continue;
             }
 
-            List<EnchantInstance> list = getEnchantmentList(player, item, k, cost, random);
-            if (!list.isEmpty()) {
-                EnchantInstance enchantmentinstance = list.get(random.nextInt(list.size()));
-                offers[k] = new EnchantmentOffer(enchantmentinstance.enchantment(), enchantmentinstance.level(), cost);
+            try {
+                EnchantmentMenu menu = (EnchantmentMenu) ((CraftEnchantmentView) event.getView()).getHandle();
+
+                Method getEnchantmentList = menu.getClass().getDeclaredMethod("getEnchantmentList", RegistryAccess.class, net.minecraft.world.item.ItemStack.class, int.class, int.class);
+                getEnchantmentList.setAccessible(true);
+
+                List<?> list = (List<?>) getEnchantmentList.invoke(menu, ((CraftWorld) player.getWorld()).getHandle().registryAccess(), CraftItemStack.asNMSCopy(item), k, cost);
+                if (!list.isEmpty()) {
+                    EnchantmentInstance enchantmentinstance = (EnchantmentInstance) list.get(random.nextInt(list.size()));
+
+                    Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment = null;
+                    int level;
+
+                    Class<EnchantmentInstance> clazz = EnchantmentInstance.class;
+
+                    if (!clazz.isRecord()) {
+                        // Handling pre-1.21.5
+                        enchantment = (Holder) clazz.getField("enchantment").get(enchantmentinstance);
+                        level = (int) clazz.getField("level").get(enchantmentinstance);
+                    } else {
+                        RecordComponent[] components = clazz.getRecordComponents();
+                        enchantment = (Holder) components[0].getAccessor().invoke(enchantmentinstance);
+                        level = (int) components[1].getAccessor().invoke(enchantmentinstance);
+                    }
+                    offers[k] = new EnchantmentOffer(CraftEnchantment.minecraftHolderToBukkit(enchantment), level, cost);
+                }
+                getEnchantmentList.setAccessible(false);
+            } catch (NoSuchMethodException e) {
+                Infuse.LOGGER.error("Could not find the \"getEnchantmentList\" method in the EnchantmentMenu class");
+            } catch (Exception e) {
+                Infuse.LOGGER.error("Error while calculating enchantments:", e);
             }
         }
-
-        // On enchant:
-        // getEnchantmentList(player, item, i, costs[i], random);
     }
 
     @EventHandler
@@ -369,14 +352,14 @@ public class Emerald extends InfuseEffect {
     }
 
     @EventHandler
-    public void onExpChange(PlayerExpChangeEvent event) {
+    public void expShare(PlayerExpChangeEvent event) {
         Player player = event.getPlayer();
         if (!CooldownManager.isEffectActive(player.getUniqueId(), "emerald")) return;
 
         for (OfflinePlayer trusted : plugin.getDataManager().getTrusted(player)) {
-            if (!trusted.isOnline()) continue;
-
             Player trustedPlayer = trusted.getPlayer();
+            if (trustedPlayer == null) continue;
+
             int toGain = (int) (event.getAmount() * plugin.getMainConfig().emeraldPercentExpToShare());
             trustedPlayer.setTotalExperience(trustedPlayer.getTotalExperience() + toGain);
 
