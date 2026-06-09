@@ -14,7 +14,7 @@ commands:
   controls:
     description: Toggle controls between offhand and mainhand.
     usage: /controls
-  cleareffect:
+  cleareffects:
     description: Clear all effects from a player.
     usage: /cleareffects <player>
     permission: op
@@ -42,6 +42,9 @@ commands:
   recipes:
     description: Check the limits
     usage: /recipes
+  draw:
+    description: Draws a line between two coordinates
+    usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
 permissions:
   ability.use:
     description: Allows the player to use abilities.

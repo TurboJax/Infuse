@@ -1,42 +1,39 @@
 package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@NullMarked
 public class YamlDataManager implements DataManager {
     private final Infuse plugin;
     private final File dataFile;
     private final YamlConfiguration config;
 
-    public YamlDataManager(Infuse plugin) {   
+    public YamlDataManager(Infuse plugin) {
         this.plugin = plugin;     
         this.dataFile = new File(plugin.getDataFolder(), "data/playerdata.yml");
         this.config = YamlConfiguration.loadConfiguration(dataFile);
     }
 
-    /**
-     * Reloads the player data.
-     *
-     * @return True if the data was loaded successfully, false otherwise.
-     */
     @Override
-    public boolean load() {
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot load {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
+    public void load() {
+        if (!plugin.isEnabled()) {
+            Infuse.LOGGER.error("Infuse not loaded, cannot load {}.", dataFile.getName());
+            return;
         }
 
         // Creating the file if it doesn't exist.
@@ -45,27 +42,20 @@ public class YamlDataManager implements DataManager {
         // Loading the config
         try {
             config.load(dataFile);
-            plugin.getLogger().log(Level.INFO, "Successfully loaded {0}", dataFile.getName());
-            return true;
+            Infuse.LOGGER.info("Successfully loaded {}", dataFile.getName());
         } catch (InvalidConfigurationException err) {
-            plugin.getLogger().log(Level.WARNING, "{0]} contains an invalid YAML configuration.  Verify the contents of the file.", dataFile.getName());
+            Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", dataFile.getName());
         } catch (IOException err) {
-            plugin.getLogger().log(Level.SEVERE, "Could not find {0}.  Check that it exists.", dataFile.getName());
+            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", dataFile.getName());
         }
 
-        return false;
     }
 
-    /**
-     * Writes the player data to disk.
-     * 
-     * @return Whether or not the data was successfully written.
-     */
-    public boolean save() {
+    public void save() {
         // Getting a plugin instance to use
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot save the {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
+        if (!plugin.isEnabled()) {
+            Infuse.LOGGER.error("Infuse not loaded, cannot save the {}.", dataFile.getName());
+            return;
         }
 
         // Creating the file if it doesn't exist.
@@ -74,25 +64,19 @@ public class YamlDataManager implements DataManager {
         // Saving the config
         try {
             config.save(dataFile);
-            plugin.getLogger().log(Level.INFO, "Saved {0}", dataFile.getName());
-            return true;
+            Infuse.LOGGER.info("Saved {}", dataFile.getName());
         } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Could not save {0}.  Make sure the user has write permissions.", dataFile.getName());
+            Infuse.LOGGER.warn("Could not save {}.  Make sure the user has write permissions.", dataFile.getName());
         }
 
-        return false;
     }
 
-    /**
-     * Creating the data file. If it doesn't exist, it just makes an empty file.
-     * 
-     * @return True if the file was created successfully, false otherwise.
-     */
-    public boolean createFile() {
+    /** Creates the config file. If it doesn't exist, it loads the default config. */
+    public void createFile() {
         // Getting a plugin instance to use
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot create default {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
+        if (!plugin.isEnabled()) {
+            Infuse.LOGGER.error("Infuse not loaded, cannot create default {}.", dataFile.getName());
+            return;
         }
 
         // Creating the file if it doesn't exist.
@@ -101,105 +85,82 @@ public class YamlDataManager implements DataManager {
                 dataFile.getParentFile().mkdirs();
                 dataFile.createNewFile();
             } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Could not create {0}.  Make sure the user has the right permissions.", dataFile.getName());
-                return false;
+                Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
             }
         }
 
-        return true;
     }
 
     @Override
-    public int getCrafted(EffectMapping effect) {
+    public int getExistingCount(InfuseEffect effect) {
         return config.getInt("effects-crafted." + effect.getKey(), 0);
     }
 
     @Override
-    public void setCrafted(EffectMapping effect, int crafted) {
-        config.set("effects-crafted." + effect.getKey(), crafted);
+    public void setExistingCount(InfuseEffect effect, int count) {
+        config.set("effects-crafted." + effect.getKey(), count);
     }
 
-    /**
-     * Gets a list of the players that the truster trusts.
-     * 
-     * @param truster
-     * 
-     * @return The list of players trusted by the truster.
-     */
     @Override
-    @NotNull
-    public Set<OfflinePlayer> getTrusted(@NotNull OfflinePlayer truster) {
-        return config.getStringList(truster.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+    public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
+        return config.getStringList(player.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
     }
 
-    /**
-     * Sets the players that the truster trusts.
-     * 
-     * @param truster The player to modify
-     * @param trusted The list of players the truster now trusts
-     */
     @Override
-    public void setTrusted(@NotNull OfflinePlayer truster, @NotNull Set<OfflinePlayer> trusted) {
+    public void setTrusted(OfflinePlayer truster, Set<OfflinePlayer> trusted) {
         config.set(truster.getUniqueId() + ".trust", trusted.stream().map(OfflinePlayer::getUniqueId).toList());
 
         save();
     }
 
-    /**
-     * Checks if a player is trusted by another player.
-     * 
-     * @param truster The player whose trusted list to check.
-     * @param toCheck The player to check if truster trusts.
-     * 
-     * @return True if the truster trusts the toCheck player, false otherwise
-     */
     @Override
-    public boolean isTrusted(@NotNull OfflinePlayer caster, @NotNull OfflinePlayer trusted) {
-        if (caster == null || trusted == null) return false;
+    public void addTrust(OfflinePlayer caster, OfflinePlayer toTrust) {
+        Set<OfflinePlayer> trustedPlayers = getTrusted(caster);
+        trustedPlayers.add(toTrust);
+
+        setTrusted(caster, trustedPlayers);
+    }
+
+    @Override
+    public void removeTrust(OfflinePlayer caster, OfflinePlayer trusted) {
+        Set<OfflinePlayer> trustedSet = getTrusted(caster);
+        trustedSet.remove(trusted);
+
+        setTrusted(caster, trustedSet);
+    }
+
+    @Override
+    public boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted) {
         if (caster.getUniqueId().equals(trusted.getUniqueId())) return true;
 
         return getTrusted(caster).contains(trusted);
     }
 
-    /**
-     * Sets the infuse effect in a specific slot for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to equip the effect in.
-     * @param effect The {@link EffectMapping} for the infuse effect.
-     */
     @Override
-    public void setEffect(@NotNull UUID playerUUID, @NotNull String slot, @NotNull EffectMapping effect) {
+    public void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect) {
         if (effect == null) {
-            config.set(playerUUID.toString() + "." + slot, null);
+            config.set(owner + "." + slot, null);
         } else {
-            config.set(playerUUID.toString() + "." + slot, effect.getKey());
+            config.set(owner + "." + slot, effect.toString());
         }
         save();
     }
 
-    /**
-     * Gets the infuse effect a player has in a specific slot.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to get the effect from.
-     * 
-     * @return null if there is not an effect equipped there or if the EffectMapping could not be deserialized.  Otherwise, it returns the deserialized EffectMapping.
-     */
-    @Override
     @Nullable
-    public EffectMapping getEffect(@NotNull UUID playerUUID, @NotNull String slot) {
-        String effectKey = config.getString(playerUUID.toString() + "." + slot, null);
-        EffectMapping effect = EffectMapping.fromEffectKey(effectKey);
+    @Override
+    public InfuseEffect getEffect(UUID owner, String slot) {
+        String effectKey = config.getString(owner.toString() + "." + slot, null);
+        InfuseEffect effect = InfuseEffect.fromString(effectKey);
         if (effectKey != null && effect == null) {
-            Bukkit.getLogger().warning("No valid ability found for the equipped effect.");
+            Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
         }
 
         return effect;
     }
 
-    public boolean hasEffect(OfflinePlayer player, EffectMapping effect, boolean differentiateAugmented, String slot) {
-        EffectMapping equippedEffect = getEffect(player.getUniqueId(), slot);
+    @Override
+    public boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented, String slot) {
+        InfuseEffect equippedEffect = getEffect(player.getUniqueId(), slot);
 
         if (equippedEffect == null) return false;
 
@@ -210,40 +171,46 @@ public class YamlDataManager implements DataManager {
         return effect.getId() == equippedEffect.getId();
     }
 
-    /**
-     * Removes an infuse effect from a specific slot for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to remove an effect from.
-     */
     @Override
     public void removeEffect(UUID playerUUID, String slot) {
         config.set(playerUUID.toString() + "." + slot, null);
         save();
     }
 
-    /**
-     * Sets the control mode for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param defaultMode The new control mode to use.
-     */
     @Override
-    public void setControlMode(@NotNull UUID playerUUID, @NotNull String defaultMode) {
+    public void setControlMode(UUID playerUUID, String defaultMode) {
         config.set(playerUUID.toString() + ".controls", defaultMode);
         save();
     }
 
-    /**
-     * Gets the control mode of a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * 
-     * @return Either "command" or "offhand".  Defaults to "offhand"
-     */
     @Override
-    @NotNull
-    public String getControlMode(@NotNull UUID playerUUID) {
+    public String getControlMode(UUID playerUUID) {
         return config.getString(playerUUID.toString() + ".controls", "offhand");
+    }
+
+    @Override
+    public void applyUpdates() {
+        try {
+            Scanner scanner = new Scanner(dataFile);
+            StringBuilder inputBuffer = new StringBuilder();
+            String line;
+
+            while (scanner.hasNextLine()) {
+                line = scanner.nextLine();
+
+                // Replacing old configs
+                if (line.startsWith("effects-crafted")) {
+                    line = line.replace("effects-crafted", "existing-effects");
+                }
+                inputBuffer.append(line);
+                inputBuffer.append('\n');
+            }
+            scanner.close();
+
+            // Emptying the string buffer back into the file
+            FileOutputStream fileOut = new FileOutputStream(dataFile);
+            fileOut.write(inputBuffer.toString().getBytes());
+            fileOut.close();
+        } catch (IOException ignored) {}
     }
 }

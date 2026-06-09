@@ -1,23 +1,22 @@
 package com.catadmirer.infuseSMP;
 
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.logging.Level;
-import org.bukkit.Bukkit;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+
 public class MainConfig {
     public final File file;
     public final FileConfiguration config;
-    public final Plugin plugin;
+    public final Infuse plugin;
 
-    public MainConfig(Plugin plugin) {
+    public MainConfig(Infuse plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "config.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
@@ -31,23 +30,25 @@ public class MainConfig {
     public boolean load() {
         // Not doing anything if the plugin isn't enabled
         if (!plugin.isEnabled()) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot load {1}.", new String[]{plugin.getName(), file.getName()});
+            Infuse.LOGGER.error("{} not loaded, cannot load {}.", plugin.getName(), file.getName());
             return false;
         }
 
-        // load config
+        // Creating the file if it doesn't exist.
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
+            plugin.saveResource(file.getName(), true);
+        }
 
+        // Loading the config
         try {
-            if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
-            if (!file.exists()) plugin.saveResource("config.yml", false);
             config.load(file);
-            plugin.getLogger().info("Successfully loaded config.yml");
+            Infuse.LOGGER.info("Successfully loaded config.yml");
             return true;
-
         } catch (InvalidConfigurationException e) {
-            plugin.getLogger().warning(file.getName() + "is broken :wilted_rose:");
+            Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", file.getName());
         } catch (IOException e) {
-            plugin.getLogger().severe("uh broken as well :wilted_rose: " + file.getName());
+            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", file.getName());
             e.printStackTrace();
         }
 
@@ -62,7 +63,7 @@ public class MainConfig {
     public boolean save() {
         // Not doing anything if the plugin isn't enabled
         if (!plugin.isEnabled()) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot save {1}.", new String[]{plugin.getName(), file.getName()});
+            Infuse.LOGGER.error("{} not loaded, cannot save {}.", plugin.getName(), file.getName());
             return false;
         }
 
@@ -78,10 +79,10 @@ public class MainConfig {
         // Saving the config
         try {
             config.save(file);
-            plugin.getLogger().log(Level.INFO, "Saved {0}", file.getName());
+            Infuse.LOGGER.info("Saved {}", file.getName());
             return true;
         } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Could not save {0}.  Make sure the user has write permissions.", file.getName());
+            Infuse.LOGGER.warn("Could not save {}.  Make sure the user has write permissions.", file.getName());
         }
 
         return false;
@@ -119,10 +120,6 @@ public class MainConfig {
         return config.getString("discord_webhook_url");
     }
 
-    public boolean invisDeaths() {
-        return config.getBoolean("invis_deaths");
-    }
-
     public boolean brewingGui() {
         return config.getBoolean("brewing_gui");
     }
@@ -135,12 +132,16 @@ public class MainConfig {
         return config.getBoolean("join_effects_enabled");
     }
 
-    public List<EffectMapping> joinEffects() {
-        return config.getStringList("join_effects").stream().map(EffectMapping::fromEffectKey).filter(Objects::nonNull).toList();
+    public List<InfuseEffect> joinEffects() {
+        return config.getStringList("join_effects").stream().map(InfuseEffect::fromString).filter(Objects::nonNull).toList();
     }
 
     public boolean enableApophis() {
         return config.getBoolean("extra_effects.Apophis");
+    }
+
+    public boolean regularBroadcast() {
+        return config.getBoolean("regular_effect_broadcast");
     }
 
     public boolean enableThief() {
@@ -152,14 +153,14 @@ public class MainConfig {
      * 
      * @param effect The effect to check
      * 
-     * @return The number of effects that can be crafted of the specified {@link EffectMapping}.
+     * @return The number of effects that can be crafted of the specified {@link InfuseEffect}.
      */
-    public int getCraftLimit(EffectMapping effect) {
-        List<Integer> craftLimits = config.getIntegerList("craft_limits." + effect.regular().getKey());
+    public int getCraftLimit(InfuseEffect effect) {
+        List<Integer> craftLimits = config.getIntegerList("craft_limits." + effect.getKey());
 
         if (craftLimits.size() != 2) {
-            plugin.getLogger().log(Level.SEVERE, "Craft limits are required to be a list of 2 integers.  Found {0} entries for effect {1}", new Object[] {craftLimits.size(), effect.getKey()});
-            plugin.getLogger().log(Level.SEVERE, "Returning default limits");
+            Infuse.LOGGER.error("Craft limits are required to be a list of 2 integers.  Found {} entries for effect {}", craftLimits.size(), effect.getKey());
+            Infuse.LOGGER.error("Returning default limits");
 
             return effect.isAugmented() ? 1 : 3;
         }
@@ -171,12 +172,20 @@ public class MainConfig {
         return config.getDouble("emerald.lock_duration_seconds", 10);
     }
 
-    public long cooldown(EffectMapping effect) {
-        return config.getLong(effect.regular().getKey() + ".cooldown." + (effect.isAugmented() ? "augmented" : "default"));
+    public boolean invisHideKills() {
+        return config.getBoolean("invis.hide_kills");
     }
 
-    public long duration(EffectMapping effect) {
-        return config.getLong(effect.regular().getKey() + ".duration." + (effect.isAugmented() ? "augmented" : "default"));
+    public boolean invisHideDeaths() {
+        return config.getBoolean("invis.hide_deaths");
+    }
+
+    public long cooldown(InfuseEffect effect) {
+        return config.getLong(effect.getKey() + ".cooldown." + (effect.isAugmented() ? "augmented" : "default"));
+    }
+
+    public long duration(InfuseEffect effect) {
+        return config.getLong(effect.getKey() + ".duration." + (effect.isAugmented() ? "augmented" : "default"));
     }
 
     public int speedDashMultiplier() {
@@ -197,5 +206,53 @@ public class MainConfig {
 
     public double oceanPullStrength() {
         return config.getDouble("ocean_pulling.pull.strength");
+    }
+
+    public int hitCounterDecaySeconds() {
+        return config.getInt("hit_counter_decay_seconds");
+    }
+
+    public int emeraldExpPerHit() {
+        return config.getInt("emerald.xp_stolen_per_hit");
+    }
+
+    public float emeraldExpPercent() {
+        return Math.clamp((float) config.getDouble("emerald.xp_stolen_percent"), 0, 1);
+    }
+
+    public float emeraldPercentExpToShare() {
+        return Math.clamp((float) config.getDouble("emerald.percent_xp_to_share"), 0, 1);
+    }
+
+    public void applyUpdates() {
+        if (!config.contains("invis_deaths")) config.set("invis_deaths", null);
+        if (!config.contains("invis.hide_kills")) config.set("invis.hide_kills", false);
+        if (!config.contains("invis.hide_deaths")) config.set("invis.hide_deaths", false);
+        if (!config.contains("haste.enchantment.looting_level")) config.set("haste.enchantment.looting_level", 5);
+        if (!config.contains("haste.enchantment.fortune_level")) config.set("haste.enchantment.fortune_level", 5);
+        if (!config.contains("haste.enchantment.efficiency_level")) config.set("haste.enchantment.efficiency_level", 10);
+        if (!config.contains("haste.enchantment.unbreaking_level")) config.set("haste.enchantment.unbreaking_level", 5);
+        if (!config.contains("hit_counter_decay_seconds")) config.set("hit_counter_decay_seconds", 15);
+        if (!config.contains("emerald.xp_stolen_per_hit")) config.set("emerald.xp_stolen_per_hit", 15);
+        if (!config.contains("emerald.xp_stolen_percent")) config.set("emerald.xp_stolen_percent", 1);
+        if (!config.contains("emerald.percent_xp_to_share")) config.set("emerald.percent_xp_to_share", 0.5);
+
+        save();
+    }
+
+    public int emeraldLootingLevel() {
+        return config.getInt("emerald.enchantment.looting_level");
+    }
+
+    public int hasteFortuneLevel() {
+        return config.getInt("haste.enchantment.fortune_level");
+    }
+
+    public int hasteEfficiencyLevel() {
+        return config.getInt("haste.enchantment.efficiency_level");
+    }
+
+    public int hasteUnbreakingLevel() {
+        return config.getInt("haste.enchantment.unbreaking_level");
     }
 }

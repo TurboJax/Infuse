@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.commands;
 
-import com.catadmirer.infuseSMP.Messages;
+import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.playerdata.DataManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -8,19 +9,20 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.jspecify.annotations.NonNull;
 
-public class ClearEffect implements Listener, CommandExecutor {
+public class ClearEffects implements Listener, CommandExecutor {
     private final DataManager dataManager;
 
-    public ClearEffect(DataManager dataManager) {
+    public ClearEffects(DataManager dataManager) {
         this.dataManager = dataManager;
     }
     
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NonNull CommandSender sender, @NonNull Command command, @NonNull String label, String @NonNull [] args) {
         if (!command.getName().equalsIgnoreCase("cleareffects")) return false;
         
         if (args.length != 1) {
-            sender.sendMessage(Messages.CLEAREFFECTS_USAGE.toComponent());
+            sender.sendMessage(new Message(MessageType.CLEAREFFECTS_USAGE).toComponent());
             return true;
         }
 

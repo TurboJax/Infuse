@@ -1,39 +1,259 @@
 package com.catadmirer.infuseSMP.effects;
 
-import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.*;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-import java.util.UUID;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.Particle.DustOptions;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class Thunder implements Listener {
-    private final Map<UUID, Long> entityLightningCooldowns = new HashMap<>();
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-    private static Infuse plugin;
+public class Thunder extends InfuseEffect {
+    private static final Map<UUID,Integer> hitTracker = new HashMap<>();
+    private static final Queue<Runnable> decayQueue = new ConcurrentLinkedQueue<>();
 
-    public Thunder(Infuse plugin) {
-        Thunder.plugin = plugin;
+    private final Infuse plugin;
+
+    public Thunder() {
+        this(false);
+    }
+
+    public Thunder(boolean augmented) {
+        super("thunder", EffectIds.THUNDER, augmented, EffectConstants.potionColor(EffectIds.THUNDER), EffectConstants.ritualColor(EffectIds.THUNDER));
+
+        this.plugin = Infuse.getInstance();
+    }
+
+    @Override
+    public void equip(Player owner) {}
+
+    @Override
+    public void unequip(Player owner) {
+        hitTracker.remove(owner.getUniqueId());
+    }
+
+    @Override
+    public void applyPassives(Player owner) {}
+
+    @Override
+    public void activateSpark(Player owner) {
+        UUID uuid = owner.getUniqueId();
+
+        if (CooldownManager.isOnCooldown(uuid, "thunder")) return;
+        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        
+        // Applying cooldowns and durations for the effect
+        long cooldown = plugin.getMainConfig().cooldown(this);
+        long duration = plugin.getMainConfig().duration(this);
+
+        CooldownManager.setTimes(uuid, "thunder", duration, cooldown);
+
+        long durationTicks = duration * 20;
+        World world = owner.getWorld();
+
+        // TODO: make configs
+        double baseRadius = 10;
+        double radiusBoostPerPlayer = 0.3;
+
+        // Starting the lightning storm
+        new BukkitRunnable() {
+            int ticksElapsed = 0;
+
+            public void run() {
+                if (this.ticksElapsed >= durationTicks) {
+                    this.cancel();
+                    return;
+                }
+
+                // Calculating the radius
+                double radius = baseRadius;
+                while (true) {
+                    long nearbyPlayers = world.getNearbyEntities(owner.getLocation(), radius, radius, radius).stream().filter(p -> p instanceof Player).count();
+                    double tmp = baseRadius + radiusBoostPerPlayer * nearbyPlayers;
+                    if (tmp == radius) {
+                        break;
+                    } else {
+                        radius = tmp;
+                    }
+                }
+
+                // Striking all players within the radius
+                for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
+                    if (!(entity instanceof Player target)) continue;
+                    if (plugin.getDataManager().isTrusted(target, owner)) continue;
+
+                    strikeLighting(target, owner);
+                }
+
+                this.ticksElapsed += 20;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Thunder();
+    }
+
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Thunder(true);
+    }
+
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_THUNDER_NAME : Message.MessageType.THUNDER_NAME);
+    }
+
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_THUNDER_LORE : Message.MessageType.THUNDER_LORE);
+    }
+
+    /**
+     * Custom lightning bolt for the thunder effect.
+     * 
+     * @param target The entity to hit with a lightning bolt.
+     * @param attacker The entity to attribute the damage to.
+     */
+    public static void strikeLighting(LivingEntity target, LivingEntity attacker) {
+        target.getWorld().strikeLightningEffect(target.getLocation());
+        target.damage(2, DamageSource.builder(DamageType.LIGHTNING_BOLT).withDirectEntity(attacker).build());
+        target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
+    }
+
+    /**
+     * Chain lightning functionality.
+     * This is a recursive function that runs up to 10 times to strike nearby entities with lightning.
+     * The function should be called with a list containing only the attacking entity.
+     * 
+     * @param targets The list of targets that have been hit by the lightning bolt, with the exception of the first entry which is the attacker.
+     * 
+     * @throws InvalidParameterException If the <code>targets</code> parameter is null or empty.
+     */
+    private void chainLightning(List<Player> targets) {
+        if (targets == null) throw new InvalidParameterException("targets cannot be null");
+        if (targets.size() == 11) return;
+        if (targets.isEmpty()) throw new InvalidParameterException("targets list needs to have the attacker in the front");
+
+        Player attacker = targets.getFirst();
+
+        // TODO: make config
+        double radius = 3;
+
+        for (Entity entity : targets.getLast().getNearbyEntities(radius, radius, radius)) {
+            if (!(entity instanceof Player target)) continue;
+            if (targets.contains(target)) continue;
+
+            // Scheduling the lightning to strike the target 1 second after the next
+            Bukkit.getScheduler().runTaskLater(plugin, () -> strikeLighting(target, attacker), 20L * (targets.size() - 1));
+
+            // Adding the target to the list
+            targets.add(target);
+
+            // Recursion babyyy
+            chainLightning(targets);
+            return;
+        }
+    }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
+
+    /**
+     * Tracking the number of hits a player has.
+     * Yes, this is a copy of the stuff in {@link HitTracker}.  I can't figure out a good way to make it count every 5 hits.
+     * 
+     * @param event A {@link EntityDamageByEntityEvent}
+     */
+    @EventHandler
+    public void onPlayerHit(EntityDamageByEntityEvent event) {
+        // Making sure both entities are players
+        if (!(event.getDamager() instanceof Player attacker)) return;
+        if (!(event.getEntity() instanceof Player target)) return;
+        if (!plugin.getDataManager().hasEffect(attacker, this)) return;
+
+        // Making sure it wasn't a lightning bolt
+        if (event.getDamageSource().getDamageType().equals(DamageType.LIGHTNING_BOLT)) return;
+
+        // Making sure it counts as a normal hit
+        // Vanilla attack cooldown needs to be at 84.8% to be a normal hit.
+        if (attacker.getAttackCooldown() < 0.85) {
+            Infuse.LOGGER.debug("[Thunder] Hit ignored due to being under attack cooldown threshold.");
+            return;
+        }
+
+        // Incrementing the hit counter
+        int hits = hitTracker.getOrDefault(attacker.getUniqueId(), 0) + 1;
+        Infuse.LOGGER.debug("[Thunder] {}'s thunder hit counter is {}.", attacker.getName(), hits);
+
+        // In stormy weather, the player only needs 5 hits to activate chain lightning
+        int hitGoal = attacker.getWorld().isClearWeather() ? 10 : 5;
+        if (hits >= hitGoal) {
+            hitTracker.put(attacker.getUniqueId(), 0);
+
+            // Removing x objects from the queue
+            for (int i = 0; i < hitGoal; i++) {
+                if (decayQueue.isEmpty()) continue;
+                decayQueue.remove();
+            }
+
+            // Striking the attacked player
+            strikeLighting(target, attacker);
+
+            // Continuing the chain
+            chainLightning(new ArrayList<>(List.of(attacker, target)));
+            
+            return;
+        }
+
+        // Saving the hit count
+        hitTracker.put(attacker.getUniqueId(), hits);
+
+        // Having the hit counter decay over time
+        int hitCounterDecaySeconds = plugin.getMainConfig().hitCounterDecaySeconds();
+        if (hitCounterDecaySeconds < 1) return;
+
+        Infuse.LOGGER.debug("[Thunder] Adding item to decay queue");
+        decayQueue.add(() -> {
+            // Skipping if the attacker has left the game
+            if (!attacker.isConnected()) return;
+
+            Infuse.LOGGER.debug("[Thunder] Decrementing hit counter");
+            int curHits = hitTracker.get(attacker.getUniqueId());
+
+            Infuse.LOGGER.debug("[Thunder] {}'s hit counter is {}.", attacker.getName(), curHits - 1);
+            hitTracker.put(attacker.getUniqueId(), curHits - 1);
+        });
+        Infuse.LOGGER.debug("{} items in queue", decayQueue.size());
+        
+        // Running the decay task if it is still around
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Runnable decayTask = decayQueue.peek();
+            if (decayTask != null) {
+                decayQueue.remove();
+                decayTask.run();
+            }
+        }, hitCounterDecaySeconds * 20);
     }
 
     @EventHandler
@@ -43,134 +263,11 @@ public class Thunder implements Listener {
 
         // Making sure the shooter has the thunder effect
         if (!(trident.getShooter() instanceof Player attacker)) return;
-        if (!plugin.getDataManager().hasEffect(attacker, EffectMapping.THUNDER)) return;
+        if (!plugin.getDataManager().hasEffect(attacker, this)) return;
 
         // Only summoning lightning if the target is a living entity
         if (event.getEntity() instanceof LivingEntity target) {
-            // TODO: Talk with cat about just striking lightning normally
-            //target.getWorld().strikeLightning(target.getLocation());
-            target.getWorld().strikeLightningEffect(target.getLocation());
-            target.damage(4, attacker);
-            target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
+            strikeLighting(target, attacker);
         }
-    }
-
-    public static void activateSpark(Boolean isAugmented, Player caster) {
-        final UUID playerUUID = caster.getUniqueId();
-
-        if (!CooldownManager.isOnCooldown(playerUUID, "thunder")) {
-            caster.getWorld().playSound(caster.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
-            
-            // Applying cooldowns and durations for the effect
-            long cooldown = plugin.getConfigFile().cooldown(isAugmented ? EffectMapping.AUG_THUNDER : EffectMapping.THUNDER);
-            long duration = plugin.getConfigFile().duration(isAugmented ? EffectMapping.AUG_THUNDER : EffectMapping.THUNDER);
-
-            CooldownManager.setDuration(playerUUID, "thunder", duration);
-            CooldownManager.setCooldown(playerUUID, "thunder", cooldown);
-
-            final long effectDuration = duration * 20;
-
-            final double radius = 10;
-            final World world = caster.getWorld();
-
-            new BukkitRunnable() {
-                int ticksElapsed = 0;
-
-                public void run() {
-                    if (this.ticksElapsed >= effectDuration) {
-                        this.cancel();
-                        return;
-                    }
-
-                    Location center = caster.getLocation();
-                    for (Entity entity : world.getNearbyEntities(center, radius, radius, radius)) {
-                        if (!(entity instanceof LivingEntity target)) continue;
-                        if (target.equals(caster)) continue;
-
-                        if (target instanceof Player p) {
-                            if (plugin.getDataManager().isTrusted(p, caster)) continue;
-                        }
-
-                        target.getWorld().strikeLightningEffect(target.getLocation());
-                        target.damage(4, caster);
-                        world.spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
-                    }
-
-                    this.ticksElapsed += 20;
-                }
-            }.runTaskTimer(plugin, 0L, 20L);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerAttack(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player attacker) {
-            if (plugin.getDataManager().hasEffect(attacker, EffectMapping.THUNDER)) {
-                if (event.getEntity() instanceof LivingEntity target) {
-                    UUID targetUUID = target.getUniqueId();
-                    long currentTime = System.currentTimeMillis();
-                    if (this.entityLightningCooldowns.containsKey(targetUUID)) {
-                        long lastStrikeTime = this.entityLightningCooldowns.get(targetUUID);
-                        if (currentTime - lastStrikeTime < 2000L) {
-                            return;
-                        }
-                    }
-
-                    this.entityLightningCooldowns.put(targetUUID, currentTime);
-                    List<Entity> nearbyEntities = target.getNearbyEntities(3, 3, 3);
-                    Optional<Entity> nextChainTarget = nearbyEntities.stream().filter((e) -> {
-                        return e instanceof LivingEntity && !e.equals(attacker);
-                    }).findFirst();
-                    if (nextChainTarget.isPresent()) {
-                        target.getWorld().strikeLightningEffect(target.getLocation());
-                        target.damage(4, attacker);
-                        target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
-                        this.chainLightning(target, attacker);
-                    }
-
-                }
-            }
-        }
-    }
-
-    private void chainLightning(Entity startEntity, final Player attacker) {
-        final Set<Entity> processedEntities = new HashSet<>();
-        final Queue<Entity> queue = new LinkedList<>();
-        queue.add(startEntity);
-        (new BukkitRunnable() {
-            int strikes = 0;
-
-            public void run() {
-                if (!queue.isEmpty() && this.strikes < 5) {
-                    Entity currentEntity = null;
-
-                    while(!queue.isEmpty()) {
-                        Entity candidate = queue.poll();
-                        if (candidate instanceof LivingEntity && !processedEntities.contains(candidate)) {
-                            currentEntity = candidate;
-                            break;
-                        }
-                    }
-
-                    if (currentEntity != null) {
-                        processedEntities.add(currentEntity);
-                        LivingEntity livingEntity = (LivingEntity)currentEntity;
-                        if (!livingEntity.equals(attacker)) {
-                            livingEntity.getWorld().strikeLightningEffect(livingEntity.getLocation());
-                            livingEntity.damage(4, attacker);
-                            livingEntity.getWorld().spawnParticle(Particle.DUST, livingEntity.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
-                            ++this.strikes;
-                            for (Entity entity : livingEntity.getNearbyEntities(3, 3, 3)) {
-                                if (entity instanceof LivingEntity && !processedEntities.contains(entity)) {
-                                    queue.add(entity);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    this.cancel();
-                }
-            }
-        }).runTaskTimer(plugin, 0L, 20L);
     }
 }

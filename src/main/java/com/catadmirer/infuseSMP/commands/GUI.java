@@ -1,10 +1,11 @@
 package com.catadmirer.infuseSMP.commands;
 
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.inventories.EffectChooser;
 import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.Messages;
+import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.inventories.AugOrRegChooser;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.jspecify.annotations.NonNull;
 
 public class GUI implements Listener, CommandExecutor {
     private final Infuse plugin;
@@ -39,7 +41,7 @@ public class GUI implements Listener, CommandExecutor {
             // Cancelling the click event to prevent the player from getting the item.
             event.setCancelled(true);
 
-            EffectMapping effect = EffectMapping.fromItem(clicked);
+            InfuseEffect effect = InfuseEffect.fromItem(clicked);
 
             // Ignoring if the player clicked on something other than an effect.
             if (effect == null) return;
@@ -54,13 +56,13 @@ public class GUI implements Listener, CommandExecutor {
         }
     }
 
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NonNull CommandSender sender, Command command, @NonNull String label, String @NonNull [] args) {
         if (command.getName().equalsIgnoreCase("infuses")) {
             // Opening the gui for players only.
             if (sender instanceof Player player) {
                 player.openInventory(new EffectChooser(plugin).getInventory());
             } else {
-                sender.sendMessage(Messages.ERROR_NOT_PLAYER.toComponent());
+                sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
             }
 
             return true;

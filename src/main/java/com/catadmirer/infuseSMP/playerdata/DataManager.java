@@ -1,44 +1,46 @@
 package com.catadmirer.infuseSMP.playerdata;
 
-import com.catadmirer.infuseSMP.managers.EffectMapping;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import org.bukkit.OfflinePlayer;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import java.util.Set;
 import java.util.UUID;
-import org.bukkit.OfflinePlayer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+@NullMarked
 public interface DataManager {
     /**
      * Reloads the player data.
+     */
+    void load();
+
+    /**
+     * Writes the config to the file.
+     */
+    void save();
+
+    /**
+     * Gets the number of effects that exist.
+     * 
+     * @param effect The effect to count
+     */
+    int getExistingCount(InfuseEffect effect);
+
+    /**
+     * Sets the number of effects that exists.
+     * 
+     * @param effect The effect to set the count of
+     * @param count The number of this effect that exists
+     */
+    void setExistingCount(InfuseEffect effect, int count);
+
+    /**
+     * Gets a set of the players that the player trusts.
      *
-     * @return True if the data was loaded successfully, false otherwise.
+     * @return The set of players trusted by the player.
      */
-    public boolean load();
-
-    /**
-     * Gets the amount of times an effect has been crafted.
-     * 
-     * @param effect The effect
-     */
-    public int getCrafted(EffectMapping effect);
-
-    /**
-     * Sets the amount of times an effect has been crafted.
-     * 
-     * @param effect The effect to adjust the crafted count for
-     * @param crafted The number of this effect that has been crafted
-     */
-    public void setCrafted(EffectMapping effect, int crafted);
-
-    /**
-     * Gets a set of the players that the truster trusts.
-     * 
-     * @param truster
-     * 
-     * @return The set of players trusted by the truster.
-     */
-    @NotNull
-    public Set<OfflinePlayer> getTrusted(@NotNull OfflinePlayer truster);
+    Set<OfflinePlayer> getTrusted(OfflinePlayer player);
 
     /**
      * Sets the players that the truster trusts.
@@ -46,7 +48,7 @@ public interface DataManager {
      * @param truster The player to modify
      * @param trusted The set of players the truster now trusts
      */
-    public void setTrusted(@NotNull OfflinePlayer truster, @NotNull Set<OfflinePlayer> trusted);
+    void setTrusted(OfflinePlayer truster, Set<OfflinePlayer> trusted);
 
     /**
      * Adds a player to the list of trusted people.
@@ -54,7 +56,7 @@ public interface DataManager {
      * @param truster The person whose trusted list to modify.
      * @param toTrust The person the truster now trusts.
      */
-    public default void addTrust(@NotNull OfflinePlayer truster, @NotNull OfflinePlayer toTrust) {
+    default void addTrust(OfflinePlayer truster, OfflinePlayer toTrust) {
         Set<OfflinePlayer> trusted = getTrusted(truster);
         trusted.add(toTrust);
         setTrusted(truster, trusted);
@@ -66,7 +68,7 @@ public interface DataManager {
      * @param truster The player whose trusted list to modify.
      * @param toRemove The person to remove from the truster's trust.
      */
-    public default void removeTrust(@NotNull OfflinePlayer truster, @NotNull OfflinePlayer toRemove) {
+    default void removeTrust(OfflinePlayer truster, OfflinePlayer toRemove) {
         Set<OfflinePlayer> trusted = getTrusted(truster);
         trusted.remove(toRemove);
         setTrusted(truster, trusted);
@@ -75,46 +77,70 @@ public interface DataManager {
     /**
      * Checks if a player is trusted by another player.
      * 
-     * @param truster The player whose trusted list to check.
-     * @param toCheck The player to check if truster trusts.
+     * @param caster The player whose trusted list to check.
+     * @param trusted The player to check if truster trusts.
      * 
      * @return True if the truster trusts the toCheck player, false otherwise
      */
-    public boolean isTrusted(@NotNull OfflinePlayer truster, @NotNull OfflinePlayer toCheck);
+    boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted);
 
     /**
      * Sets the infuse effect in a specific slot for a player.
      * 
-     * @param playerUUID The UUID of the player.
+     * @param owner The UUID of the player.
      * @param slot The slot to equip the effect in.
-     * @param effect The {@link EffectMapping} for the infuse effect.
+     * @param effect The {@link InfuseEffect} for the infuse effect.
      */
-    public void setEffect(@NotNull UUID playerUUID, @NotNull String slot, @NotNull EffectMapping effect);
+    void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect);
 
     /**
      * Gets the infuse effect a player has in a specific slot.
      * 
-     * @param playerUUID The UUID of the player.
+     * @param owner The UUID of the player.
      * @param slot The slot to get the effect from.
      * 
-     * @return null if there is not an effect equipped there or if the EffectMapping could not be deserialized.  Otherwise, it returns the deserialized EffectMapping.
+     * @return null if there is not an effect equipped there or if the InfuseEffect could not be deserialized.  Otherwise, it returns the deserialized InfuseEffect.
      */
-    @Nullable
-    public EffectMapping getEffect(@NotNull UUID playerUUID, @NotNull String slot);
+    @Nullable InfuseEffect getEffect(UUID owner, String slot);
 
-    public default boolean hasEffect(OfflinePlayer player, EffectMapping effect) {
+    /**
+     * Checks if the player has the infuse effect.
+     * It checks both slots and doesn't differentiate between regular and augmented effects.
+     *
+     * @return True if the player has the effect equipped, false otherwise.
+     */
+    default boolean hasEffect(OfflinePlayer player, InfuseEffect effect) {
         return hasEffect(player, effect, false);
     }
 
-    public default boolean hasEffect(OfflinePlayer player, EffectMapping effect, boolean differentiateAugmented) {
+    /**
+     * Checks if the player has the infuse effect.
+     * It checks both slots and doesn't differentiate between regular and augmented effects.
+     *
+     * @return True if the player has the effect equipped, false otherwise.
+     */
+    default boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented) {
         return hasEffect(player, effect, differentiateAugmented, "1") || hasEffect(player, effect, differentiateAugmented, "2");        
     }
 
-    public default boolean hasEffect(OfflinePlayer player, EffectMapping effect, String slot) {
+    /**
+     * Checks if the player has the infuse effect.
+     * It checks both slots and doesn't differentiate between regular and augmented effects.
+     *
+     * @return True if the player has the effect equipped, false otherwise.
+     */
+    default boolean hasEffect(OfflinePlayer player, InfuseEffect effect, String slot) {
         return hasEffect(player, effect, false, slot);
     }
 
-    public boolean hasEffect(OfflinePlayer player, EffectMapping effect, boolean differentiateAugmented, String slot);
+    /**
+     * Checks if the player has the infuse effect equipped in a specific slot.
+     *
+     * @param differentiateAugmented Whether the search should differentiate between regular and augmented effects.
+     *
+     * @return True if the player has the effect equipped, false otherwise.
+     */
+    boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented, String slot);
 
     /**
      * Removes an infuse effect from a specific slot for a player.
@@ -122,7 +148,7 @@ public interface DataManager {
      * @param playerUUID The UUID of the player.
      * @param slot The slot to remove an effect from.
      */
-    public void removeEffect(@NotNull UUID playerUUID, @NotNull String slot);
+    void removeEffect(UUID playerUUID, String slot);
 
     /**
      * Sets the control mode for a player.
@@ -130,7 +156,7 @@ public interface DataManager {
      * @param playerUUID The UUID of the player.
      * @param defaultMode The new control mode to use.
      */
-    public void setControlMode(@NotNull UUID playerUUID, @NotNull String defaultMode);
+    void setControlMode(UUID playerUUID, String defaultMode);
 
     /**
      * Gets the control mode of a player.
@@ -139,6 +165,10 @@ public interface DataManager {
      * 
      * @return Either "command" or "offhand".  Defaults to "offhand"
      */
-    @NotNull
-    public String getControlMode(@NotNull UUID playerUUID);
+    String getControlMode(UUID playerUUID);
+
+    /**
+     * Modifies the config to make any necessary changes to make old versions compatible with this new one.
+     */
+    void applyUpdates();
 }
