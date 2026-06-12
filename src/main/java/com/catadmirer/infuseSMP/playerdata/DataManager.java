@@ -6,7 +6,6 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
-import java.util.UUID;
 
 @NullMarked
 public interface DataManager {
@@ -45,63 +44,64 @@ public interface DataManager {
     /**
      * Sets the players that the truster trusts.
      * 
-     * @param truster The player to modify
-     * @param trusted The set of players the truster now trusts
+     * @param player The player to modify
+     * @param trusted The set of players the truster should now trust
      */
-    void setTrusted(OfflinePlayer truster, Set<OfflinePlayer> trusted);
+    void setTrusted(OfflinePlayer player, Set<OfflinePlayer> trusted);
 
     /**
      * Adds a player to the list of trusted people.
      * 
-     * @param truster The person whose trusted list to modify.
-     * @param toTrust The person the truster now trusts.
+     * @param player The person whose trusted list to modify.
+     * @param trusted The person the truster now trusts.
      */
-    default void addTrust(OfflinePlayer truster, OfflinePlayer toTrust) {
-        Set<OfflinePlayer> trusted = getTrusted(truster);
-        trusted.add(toTrust);
-        setTrusted(truster, trusted);
+    default void addTrust(OfflinePlayer player, OfflinePlayer trusted) {
+        // TODO: Override in SQL-based data managers
+        Set<OfflinePlayer> allTrusted = getTrusted(player);
+        allTrusted.add(trusted);
+        setTrusted(player, allTrusted);
     }
 
     /**
      * Removes a player from another player's list of trusted people.
      * 
-     * @param truster The player whose trusted list to modify.
-     * @param toRemove The person to remove from the truster's trust.
+     * @param player The player whose trusted list to modify.
+     * @param untrusted The person to remove from the truster's trust.
      */
-    default void removeTrust(OfflinePlayer truster, OfflinePlayer toRemove) {
-        Set<OfflinePlayer> trusted = getTrusted(truster);
-        trusted.remove(toRemove);
-        setTrusted(truster, trusted);
+    default void removeTrust(OfflinePlayer player, OfflinePlayer untrusted) {
+        // TODO: Override in SQL-based data managers
+        Set<OfflinePlayer> trusted = getTrusted(player);
+        trusted.remove(untrusted);
+        setTrusted(player, trusted);
     }
 
     /**
      * Checks if a player is trusted by another player.
      * 
-     * @param caster The player whose trusted list to check.
+     * @param player The player whose trusted list to check.
      * @param trusted The player to check if truster trusts.
      * 
      * @return True if the truster trusts the toCheck player, false otherwise
      */
-    boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted);
+    default boolean isTrusted(OfflinePlayer player, OfflinePlayer trusted) {
+        // TODO: Override in SQL-based data managers
+        return getTrusted(player).contains(trusted);
+    }
 
     /**
      * Sets the infuse effect in a specific slot for a player.
      * 
-     * @param owner The UUID of the player.
      * @param slot The slot to equip the effect in.
      * @param effect The {@link InfuseEffect} for the infuse effect.
      */
-    void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect);
+    void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect);
 
     /**
      * Gets the infuse effect a player has in a specific slot.
-     * 
-     * @param owner The UUID of the player.
-     * @param slot The slot to get the effect from.
-     * 
+     *
      * @return null if there is not an effect equipped there or if the InfuseEffect could not be deserialized.  Otherwise, it returns the deserialized InfuseEffect.
      */
-    @Nullable InfuseEffect getEffect(UUID owner, String slot);
+    @Nullable InfuseEffect getEffect(OfflinePlayer player, String slot);
 
     /**
      * Checks if the player has the infuse effect.
@@ -140,32 +140,31 @@ public interface DataManager {
      *
      * @return True if the player has the effect equipped, false otherwise.
      */
-    boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented, String slot);
+    default boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented, String slot) {
+        InfuseEffect equipped = getEffect(player, slot);
+        if (equipped == null) return false;
 
-    /**
-     * Removes an infuse effect from a specific slot for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to remove an effect from.
-     */
-    void removeEffect(UUID playerUUID, String slot);
+        if (differentiateAugmented) {
+            return effect.equals(equipped);
+        }
 
-    /**
-     * Sets the control mode for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param defaultMode The new control mode to use.
-     */
-    void setControlMode(UUID playerUUID, String defaultMode);
+        return effect.getId() == equipped.getId();
+    }
+
+    /** Removes an infuse effect from a specific slot for a player. */
+    default void removeEffect(OfflinePlayer player, String slot) {
+        setEffect(player, slot, null);
+    }
+
+    /** Sets the control mode for a player. */
+    void setControlMode(OfflinePlayer player, String controlMode);
 
     /**
      * Gets the control mode of a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * 
+     *
      * @return Either "command" or "offhand".  Defaults to "offhand"
      */
-    String getControlMode(UUID playerUUID);
+    String getControlMode(OfflinePlayer player);
 
     /**
      * Modifies the config to make any necessary changes to make old versions compatible with this new one.
