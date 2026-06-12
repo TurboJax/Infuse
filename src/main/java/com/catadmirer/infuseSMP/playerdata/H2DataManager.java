@@ -45,9 +45,11 @@ public class H2DataManager implements DataManager {
 
     @Override
     public void load() {
-        final String createPlayerDataTable = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY, slot_1 INTEGER NOT NULL, slot_2 INTEGER NOT NULL, offhand_control BOOLEAN NOT NULL);";
+        // CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY NOT NULL, slot_1 INTEGER, slot_2 INTEGER, offhand_control BOOLEAN NOT NULL);
+        // INSERT INTO player_data (player, slot_1, slot_2, offhand_control) VALUES ('4f8d5501-de90-4d92-a927-17f2c4ff0cb1', NULL, NULL, FALSE)
+        final String createPlayerDataTable = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY NOT NULL, slot_1 INTEGER, slot_2 INTEGER, offhand_control BOOLEAN NOT NULL);";
         final String createTrustTable = "CREATE TABLE IF NOT EXISTS trusts(truster UUID NOT NULL, trusted UUID NOT NULL);";
-        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER NOT NULL, count INTEGER NOT NULL);";
+        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER PRIMARY KEY NOT NULL, crafted INTEGER NOT NULL);";
 
         try (Connection conn = dataSource.getConnection()) {
             // Creating the tables if they don't exist
@@ -69,11 +71,55 @@ public class H2DataManager implements DataManager {
 
     @Override
     public int getExistingCount(InfuseEffect effect) {
+        String sql = "SELECT crafted FROM crafted_effects WHERE effect = ?;";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, effect.serialize());
+
+            ResultSet results = stmt.executeQuery();
+            if (!results.next()) return 0;
+
+            return results.getInt(1);
+        } catch (SQLException e) {
+            Infuse.LOGGER.error("Database error!", e);
+        }
+
         return 0;
     }
 
     @Override
-    public void setExistingCount(InfuseEffect effect, int count) {}
+    public void setExistingCount(InfuseEffect effect, int count) {
+        String sql = "INSERT OR REPLACE INTO crafted_effects(effect, crafted) VALUES (?, ?);";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, effect.serialize());
+            stmt.setInt(2, count);
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            Infuse.LOGGER.error("Database error!", e);
+        }
+    }
+
+    /**
+     * Creates a new player object in the database.
+     * Both effects default to null, and the offhand_control defaults to false.
+     * If a row for the player already exists, nothing happens.
+     *
+     * @param player The player to create an entry for.
+     */
+    public void createNewPlayer(OfflinePlayer player) {
+        String newPlayer = "INSERT OR IGNORE INTO player_data (player, offhand_control) VALUES (?, FALSE);";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(newPlayer)) {
+            stmt.setObject(1, player.getUniqueId());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            Infuse.LOGGER.error("Database error!", e);
+        }
+    }
 
     @Override
     public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
@@ -102,12 +148,67 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setTrusted(OfflinePlayer truster, Set<OfflinePlayer> trusted) {
+    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
+        Set<OfflinePlayer> trustedCopy = new HashSet<>(allTrusted);
+
+        String findUnused = "SELECT * FROM trusts WHERE truster = ?;";
+        String deleteExtra = "DELETE FROM trusts WHERE truster = ? AND trusted = ?;";
+
+        String insertTrusted = "INSERT INTO trusts (truster, trusted) VALUES (?, ?);";
+
+        try (Connection conn = dataSource.getConnection()) {
+            // Removing players who are no longer trusted and filtering out players who are already trusted from the copy of the set
+            try (PreparedStatement stmt = conn.prepareStatement(findUnused);
+                 PreparedStatement delStmt = conn.prepareStatement(deleteExtra)) {
+                stmt.setObject(1, player.getUniqueId());
+                stmt.execute();
+                ResultSet results = stmt.getResultSet();
+
+                delStmt.setObject(1, player.getUniqueId());
+
+                // Looping through the trusted players
+                while (results.next()) {
+                    OfflinePlayer trusted = Bukkit.getOfflinePlayer(results.getObject(1, UUID.class));
+
+                    // Skipping already trusted players
+                    if (trustedCopy.contains(trusted)) {
+                        trustedCopy.remove(trusted);
+                        continue;
+                    }
+
+                    // Removing players who are no longer trusted
+                    delStmt.setObject(2, trusted.getUniqueId());
+                    delStmt.addBatch();
+                }
+
+                // Executing the delete statement
+                delStmt.executeBatch();
+            } catch (SQLException e) {
+                Infuse.LOGGER.error("Database error!", e);
+            }
+
+            // Adding the rest of the players to trust
+            try (PreparedStatement stmt = conn.prepareStatement(insertTrusted)) {
+                stmt.setObject(1, player.getUniqueId());
+
+                for (OfflinePlayer trusted : trustedCopy) {
+                    stmt.setObject(2, trusted.getUniqueId());
+                    stmt.addBatch();
+                }
+
+                stmt.executeBatch();
+            } catch (SQLException err) {
+                LOGGER.error("Failed to insert players back into the database", err);
+            }
+        } catch (SQLException err) {
+            LOGGER.info("Failed to connect to database.", err);
+        }
+
         throw new UnsupportedOperationException("Unimplemented method 'setTrusted'");
     }
 
     @Override
-    public void addTrust(OfflinePlayer truster, OfflinePlayer toTrust) {
+    public void addTrust(OfflinePlayer player, OfflinePlayer toTrust) {
         String insertElem = """
                             INSERT INTO trusts (truster, trusted)
                             SELECT ?, ?
@@ -115,7 +216,7 @@ public class H2DataManager implements DataManager {
                                 SELECT * FROM trusts WHERE truster = ? AND trusted = ?
                             );""";
 
-        UUID trusterUUID = truster.getUniqueId();
+        UUID trusterUUID = player.getUniqueId();
         UUID toTrustUUID = toTrust.getUniqueId();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -134,11 +235,11 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void removeTrust(OfflinePlayer truster, OfflinePlayer toRemove) {
+    public void removeTrust(OfflinePlayer player, OfflinePlayer untrusted) {
         String deleteElem = "DELETE FROM trusts WHERE truster = ? AND trusted = ?";
 
-        UUID trusterUUID = truster.getUniqueId();
-        UUID trustedUUID = toRemove.getUniqueId();
+        UUID trusterUUID = player.getUniqueId();
+        UUID trustedUUID = untrusted.getUniqueId();
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(deleteElem)) {
@@ -154,18 +255,21 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted) {
+    public boolean isTrusted(OfflinePlayer player, OfflinePlayer trusted) {
         String selectStr = "SELECT trusted FROM trusts WHERE truster = ? AND trusted = ?";
 
-        UUID trusterUUID = caster.getUniqueId();
+        UUID trusterUUID = player.getUniqueId();
         UUID trustedUUID = trusted.getUniqueId();
 
         try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(selectStr);
-            stmt.setObject(1, trusterUUID);
-            stmt.setObject(2, trustedUUID);
+            try (PreparedStatement stmt = conn.prepareStatement(selectStr)) {
+                stmt.setObject(1, trusterUUID);
+                stmt.setObject(2, trustedUUID);
 
-            return stmt.executeQuery().next();
+                return stmt.executeQuery().next();
+            } catch (SQLException e) {
+                Infuse.LOGGER.error("Failed to execute SQL \"{}\"", selectStr, e);
+            }
         } catch (SQLException err) {
             LOGGER.info("Failed to connect to database.", err);
         }
@@ -174,40 +278,103 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setEffect'");
+    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+        createNewPlayer(player);
+
+        // Making sure slot is "1" or "2"
+        if (!slot.equals("1") && !slot.equals("2")) {
+            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
+            return;
+        }
+
+        // Constructing sql based on specified slot
+        final String setEffectSQL = "UPDATE player_data SET slot_1 = ? WHERE player = ?;";
+
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(setEffectSQL);
+            stmt.setObject(1, effect == null ? null : effect.serialize());
+            stmt.setObject(2, player.getUniqueId());
+
+            stmt.executeUpdate();
+        } catch (SQLException err) {
+            Infuse.LOGGER.error("Could not open connection to H2 database", err);
+        }
     }
 
     @Nullable
     @Override
-    public InfuseEffect getEffect(UUID owner, String slot) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEffect'");
+    public InfuseEffect getEffect(OfflinePlayer player, String slot) {
+        // Making sure slot is "1" or "2"
+        if (!slot.equals("1") && !slot.equals("2")) {
+            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
+            return null;
+        }
+
+        // Constructing sql based on specified slot
+        final String getEffectSQL = "SELECT (slot_" + slot + ") FROM player_data WHERE player = ?;";
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(getEffectSQL)) {
+                stmt.setObject(1, player.getUniqueId());
+
+                ResultSet results = stmt.executeQuery();
+
+                // Triggers when no effect is equipped or the effect is null
+                if (!results.next() || results.wasNull()) {
+                    return null;
+                }
+
+                return InfuseEffect.deserialize(results.getInt(1));
+            } catch (SQLException e) {
+                Infuse.LOGGER.error("Failed to read effects from the database", e);
+            }
+        } catch (SQLException err) {
+            Infuse.LOGGER.error("Could not open connection to H2 database", err);
+        }
+
+        return null;
     }
 
     @Override
-    public boolean hasEffect(OfflinePlayer player, InfuseEffect effect, boolean differentiateAugmented, String slot) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'hasEffect'");
+    public void setControlMode(OfflinePlayer player, String controlMode) {
+        createNewPlayer(player);
+
+        boolean offhandControls;
+        if (controlMode.equals("offhand")) {
+            offhandControls = true;
+        } else if (controlMode.equals("command")) {
+            offhandControls = false;
+        } else {
+            Infuse.LOGGER.error("Invalid control mode \"{}\".  Please use \"offhand\" or \"command\"", controlMode);
+            return;
+        }
+
+        String sql = "UPDATE player_data SET offhand_control = ? WHERE player = ?;";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, offhandControls);
+            stmt.setObject(2, player.getUniqueId());
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            Infuse.LOGGER.error("Database error!", e);
+        }
     }
 
     @Override
-    public void removeEffect(UUID playerUUID, String slot) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'removeEffect'");
-    }
+    public String getControlMode(OfflinePlayer player) {
+        String sql = "SELECT offhand_control FROM player_data WHERE player = ?;";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, player.getUniqueId());
 
-    @Override
-    public void setControlMode(UUID playerUUID, String defaultMode) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setControlMode'");
-    }
+            ResultSet results = stmt.executeQuery();
+            return results.getBoolean(1) ? "offhand" : "command";
+        } catch (SQLException e) {
+            Infuse.LOGGER.error("Database error!", e);
+        }
 
-    @Override
-    public String getControlMode(UUID playerUUID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getControlMode'");
+        return "command";
     }
 
     @Override
