@@ -114,29 +114,7 @@ public class YamlDataManager implements DataManager {
     }
 
     @Override
-    public void addTrust(OfflinePlayer caster, OfflinePlayer toTrust) {
-        Set<OfflinePlayer> trustedPlayers = getTrusted(caster);
-        trustedPlayers.add(toTrust);
 
-        setTrusted(caster, trustedPlayers);
-    }
-
-    @Override
-    public void removeTrust(OfflinePlayer caster, OfflinePlayer trusted) {
-        Set<OfflinePlayer> trustedSet = getTrusted(caster);
-        trustedSet.remove(trusted);
-
-        setTrusted(caster, trustedSet);
-    }
-
-    @Override
-    public boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted) {
-        if (caster.getUniqueId().equals(trusted.getUniqueId())) return true;
-
-        return getTrusted(caster).contains(trusted);
-    }
-
-    @Override
     public void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect) {
         if (effect == null) {
             config.set(owner + "." + slot, null);
