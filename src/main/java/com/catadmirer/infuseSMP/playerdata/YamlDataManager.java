@@ -149,7 +149,7 @@ public class YamlDataManager implements DataManager {
 
     @Override
     public String getControlMode(OfflinePlayer player) {
-        return config.getString(player.getUniqueId() + ".controls", "offhand");
+        return config.getString(player.getUniqueId() + ".controls", "command");
     }
 
     @Override

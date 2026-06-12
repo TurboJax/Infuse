@@ -162,7 +162,7 @@ public interface DataManager {
     /**
      * Gets the control mode of a player.
      *
-     * @return Either "command" or "offhand".  Defaults to "offhand"
+     * @return Either "command" or "offhand".  Defaults to "command"
      */
     String getControlMode(OfflinePlayer player);
 
