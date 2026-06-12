@@ -107,8 +107,8 @@ public class YamlDataManager implements DataManager {
     }
 
     @Override
-    public void setTrusted(OfflinePlayer truster, Set<OfflinePlayer> trusted) {
-        config.set(truster.getUniqueId() + ".trust", trusted.stream().map(OfflinePlayer::getUniqueId).toList());
+    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
+        config.set(player.getUniqueId() + ".trust", allTrusted.stream().map(OfflinePlayer::getUniqueId).toList());
 
         save();
     }
@@ -131,8 +131,8 @@ public class YamlDataManager implements DataManager {
 
     @Nullable
     @Override
-    public InfuseEffect getEffect(UUID owner, String slot) {
-        String effectKey = config.getString(owner.toString() + "." + slot, null);
+    public InfuseEffect getEffect(OfflinePlayer player, String slot) {
+        String effectKey = config.getString(player.getUniqueId() + "." + slot, null);
         InfuseEffect effect = InfuseEffect.fromString(effectKey);
         if (effectKey != null && effect == null) {
             Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
@@ -142,20 +142,20 @@ public class YamlDataManager implements DataManager {
     }
 
     @Override
-    public void removeEffect(UUID playerUUID, String slot) {
-        config.set(playerUUID.toString() + "." + slot, null);
+    public void removeEffect(OfflinePlayer player, String slot) {
+        config.set(player.getUniqueId() + "." + slot, null);
         save();
     }
 
     @Override
-    public void setControlMode(UUID playerUUID, String defaultMode) {
-        config.set(playerUUID.toString() + ".controls", defaultMode);
+    public void setControlMode(OfflinePlayer player, String defaultMode) {
+        config.set(player.getUniqueId() + ".controls", defaultMode);
         save();
     }
 
     @Override
-    public String getControlMode(UUID playerUUID) {
-        return config.getString(playerUUID.toString() + ".controls", "offhand");
+    public String getControlMode(OfflinePlayer player) {
+        return config.getString(player.getUniqueId() + ".controls", "offhand");
     }
 
     @Override
