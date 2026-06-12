@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 
 @NullMarked
 public class H2DataManager implements DataManager {
+    private final DataCache cache;
     private final DataSource dataSource;
 
     public H2DataManager(Infuse plugin) {
@@ -29,6 +30,8 @@ public class H2DataManager implements DataManager {
         } catch (ClassNotFoundException err) {
             Infuse.LOGGER.error("Could not load the H2 driver", err);
         }
+
+        cache = new DataCache();
 
         // Creating the JDBC DataSource
         JdbcDataSource dataSource = new JdbcDataSource();
@@ -65,25 +68,15 @@ public class H2DataManager implements DataManager {
 
     @Override
     public int getExistingCount(InfuseEffect effect) {
-        String sql = "SELECT crafted FROM crafted_effects WHERE effect = ?;";
-
-        try (Connection conn = dataSource.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, effect.serialize());
-
-            ResultSet results = stmt.executeQuery();
-            if (!results.next()) return 0;
-
-            return results.getInt(1);
-        } catch (SQLException e) {
-            Infuse.LOGGER.error("Database error!", e);
-        }
-
-        return 0;
+        return cache.getExistingCount(effect);
     }
 
     @Override
     public void setExistingCount(InfuseEffect effect, int count) {
+        // Updating the cache
+        cache.setExistingCount(effect, count);
+
+        // Updating the database
         String sql = "INSERT OR REPLACE INTO crafted_effects(effect, crafted) VALUES (?, ?);";
 
         try (Connection conn = dataSource.getConnection();
@@ -117,32 +110,15 @@ public class H2DataManager implements DataManager {
 
     @Override
     public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
-        String selectStr = "SELECT trusted FROM trusts WHERE truster = ?";
-        UUID trusterUUID = player.getUniqueId();
-
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(selectStr);
-            stmt.setObject(1, trusterUUID);
-
-            Set<UUID> trustedUUIDs = new HashSet<>();
-            ResultSet result = stmt.executeQuery();
-            while (result.next()) {
-                try {
-                    trustedUUIDs.add(result.getObject(1, UUID.class));
-                } catch (SQLException err) {
-                    Infuse.LOGGER.warn("Invalid UUID in SQL results.  Skipping value.");
-                }
-            }
-
-            return trustedUUIDs.stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
-        } catch (SQLException err) {
-            Infuse.LOGGER.info("Failed to connect to database.", err);
-        }
-        return Set.of();
+        return cache.getTrusted(player);
     }
 
     @Override
     public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
+        // Updating the cache
+        cache.setTrusted(player, allTrusted);
+
+        // Updating the database
         Set<OfflinePlayer> trustedCopy = new HashSet<>(allTrusted);
 
         String findUnused = "SELECT * FROM trusts WHERE truster = ?;";
@@ -203,6 +179,10 @@ public class H2DataManager implements DataManager {
 
     @Override
     public void addTrust(OfflinePlayer player, OfflinePlayer toTrust) {
+        // Updating the cache
+        cache.addTrust(player, toTrust);
+
+        // Updating the database
         String insertElem = """
                             INSERT INTO trusts (truster, trusted)
                             SELECT ?, ?
@@ -230,6 +210,10 @@ public class H2DataManager implements DataManager {
 
     @Override
     public void removeTrust(OfflinePlayer player, OfflinePlayer untrusted) {
+        // Updating the cache
+        cache.removeTrust(player, untrusted);
+
+        // Updating the database
         String deleteElem = "DELETE FROM trusts WHERE truster = ? AND trusted = ?";
 
         UUID trusterUUID = player.getUniqueId();
@@ -250,29 +234,15 @@ public class H2DataManager implements DataManager {
 
     @Override
     public boolean isTrusted(OfflinePlayer player, OfflinePlayer trusted) {
-        String selectStr = "SELECT trusted FROM trusts WHERE truster = ? AND trusted = ?";
-
-        UUID trusterUUID = player.getUniqueId();
-        UUID trustedUUID = trusted.getUniqueId();
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(selectStr)) {
-                stmt.setObject(1, trusterUUID);
-                stmt.setObject(2, trustedUUID);
-
-                return stmt.executeQuery().next();
-            } catch (SQLException e) {
-                Infuse.LOGGER.error("Failed to execute SQL \"{}\"", selectStr, e);
-            }
-        } catch (SQLException err) {
-            Infuse.LOGGER.info("Failed to connect to database.", err);
-        }
-
-        return false;
+        return cache.isTrusted(player, trusted);
     }
 
     @Override
     public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+        // Updating the cache
+        cache.setEffect(player, slot, effect);
+
+        // Updating the database
         createNewPlayer(player);
 
         // Making sure slot is "1" or "2"
@@ -298,39 +268,15 @@ public class H2DataManager implements DataManager {
     @Nullable
     @Override
     public InfuseEffect getEffect(OfflinePlayer player, String slot) {
-        // Making sure slot is "1" or "2"
-        if (!slot.equals("1") && !slot.equals("2")) {
-            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
-            return null;
-        }
-
-        // Constructing sql based on specified slot
-        final String getEffectSQL = "SELECT (slot_" + slot + ") FROM player_data WHERE player = ?;";
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(getEffectSQL)) {
-                stmt.setObject(1, player.getUniqueId());
-
-                ResultSet results = stmt.executeQuery();
-
-                // Triggers when no effect is equipped or the effect is null
-                if (!results.next() || results.wasNull()) {
-                    return null;
-                }
-
-                return InfuseEffect.deserialize(results.getInt(1));
-            } catch (SQLException e) {
-                Infuse.LOGGER.error("Failed to read effects from the database", e);
-            }
-        } catch (SQLException err) {
-            Infuse.LOGGER.error("Could not open connection to H2 database", err);
-        }
-
-        return null;
+        return cache.getEffect(player, slot);
     }
 
     @Override
     public void setControlMode(OfflinePlayer player, String controlMode) {
+        // Updating the cache
+        cache.setControlMode(player, controlMode);
+
+        // Updating the database
         createNewPlayer(player);
 
         boolean offhandControls;
@@ -357,18 +303,7 @@ public class H2DataManager implements DataManager {
 
     @Override
     public String getControlMode(OfflinePlayer player) {
-        String sql = "SELECT offhand_control FROM player_data WHERE player = ?;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, player.getUniqueId());
-
-            ResultSet results = stmt.executeQuery();
-            return results.getBoolean(1) ? "offhand" : "command";
-        } catch (SQLException e) {
-            Infuse.LOGGER.error("Database error!", e);
-        }
-
-        return "command";
+        return cache.getControlMode(player);
     }
 
     @Override
