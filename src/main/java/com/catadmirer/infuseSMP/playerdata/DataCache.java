@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 @ApiStatus.Internal
 @NullMarked
 public class DataCache implements DataManager {
-    private final Map<UUID,Set<UUID>> allTrusts = new HashMap<>();
-    private final Map<UUID,@Nullable Integer> leftEffects = new HashMap<>();
-    private final Map<UUID,@Nullable Integer> rightEffects = new HashMap<>();
-    private final Map<UUID,Boolean> controlModes = new HashMap<>();
-    private final Map<Integer,Integer> craftedCounts = new HashMap<>();
+    public final Map<UUID,Set<UUID>> allTrusts = new HashMap<>();
+    public final Map<UUID,@Nullable Integer> leftEffects = new HashMap<>();
+    public final Map<UUID,@Nullable Integer> rightEffects = new HashMap<>();
+    public final Map<UUID,Boolean> controlModes = new HashMap<>();
+    public final Map<Integer,Integer> craftedCounts = new HashMap<>();
 
     @Override
     public void load() {
