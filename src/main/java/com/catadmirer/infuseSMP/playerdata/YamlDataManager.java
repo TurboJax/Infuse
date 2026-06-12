@@ -114,12 +114,17 @@ public class YamlDataManager implements DataManager {
     }
 
     @Override
+    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+        // Making sure slot is "1" or "2"
+        if (!slot.equals("1") && !slot.equals("2")) {
+            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
+            return;
+        }
 
-    public void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect) {
         if (effect == null) {
-            config.set(owner + "." + slot, null);
+            config.set(player.getUniqueId() + "." + slot, null);
         } else {
-            config.set(owner + "." + slot, effect.toString());
+            config.set(player.getUniqueId() + "." + slot, effect.toString());
         }
         save();
     }
