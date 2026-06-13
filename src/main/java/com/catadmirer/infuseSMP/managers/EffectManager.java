@@ -79,19 +79,18 @@ public class EffectManager implements Listener {
 
     /**
      * Equips an effect in the specified slot.
+     * Fails if the {@link EffectEquipEvent} is canceled.
      * 
      * @param player The player who will get the effect
      * @param effect The effect to give the player.
      * @param slot The slot to equip the effect into.
+     *
+     * @return true if the effect was equipped successfully, false otherwise.
      */
-    public void equipEffect(Player player, InfuseEffect effect, String slot) {
-        // Checking for an effect in the slot.
-        InfuseEffect currentEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
-        if (currentEffect != null) return;
-
+    public boolean equipEffect(Player player, InfuseEffect effect, String slot) {
         // Calling an EffectEquipEvent and stopping if it is canceled.
         EffectEquipEvent event = new EffectEquipEvent(player, effect, slot);
-        if (!event.callEvent()) return;
+        if (!event.callEvent()) return false;
 
         // Equipping the effect and updating the player data
         effect.equip(player);
@@ -101,20 +100,32 @@ public class EffectManager implements Listener {
         Message msg = new Message(MessageType.EFFECT_EQUIPPED);
         msg.applyPlaceholder("effect_name", effect.getName());
         player.sendMessage(msg.toComponent());
+
+        return true;
     }
 
-    public void unequipEffect(Player player, String slot) {
+    /**
+     * Unequips an effect from a player.
+     * Fails if the {@link EffectUnequipEvent} was canceled.
+     *
+     * @param player The {@link Player} to remove an effect from.
+     * @param slot The slot to remove the effect from.
+     * @return True if the effect was removed successfully, false otherwise.
+     */
+    public boolean unequipEffect(Player player, String slot) {
         // Getting the equipped effect
         InfuseEffect currentEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
-        if (currentEffect == null) return;
+        if (currentEffect == null) return true;
 
         // Calling an EffectUnequipEvent and stopping if it is canceled.
         EffectUnequipEvent event = new EffectUnequipEvent(player, currentEffect, slot);
-        if (!event.callEvent()) return;
+        if (!event.callEvent()) return false;
 
         // Unequipping the effect and updating the player data
         currentEffect.unequip(player);
         plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
+
+        return true;
     }
 
     /**
@@ -129,6 +140,7 @@ public class EffectManager implements Listener {
 
         // Getting the effect from the item
         InfuseEffect effect = InfuseEffect.fromItem(mainHandItem);
+
         // Skipping if the effect is not found.
         if (effect == null) return;
 
