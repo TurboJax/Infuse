@@ -21,6 +21,8 @@ import java.util.Map;
 
 public abstract class InfuseEffect implements Listener {
     private static final Map<Integer,InfuseEffect> REGISTERED_EFFECTS = new HashMap<>();
+
+    public static final NamespacedKey EFFECT_KEY = new NamespacedKey("infuse", "effect_key");
     public static final NamespacedKey AUG_KEY = new NamespacedKey("infuse", "aug");
 
     protected final String key;
@@ -143,8 +145,7 @@ public abstract class InfuseEffect implements Listener {
         meta.customName(getName().toComponent());
         meta.lore(getLore().toComponentList());
         meta.setColor(org.bukkit.Color.fromARGB(potionColor.getRGB()));
-        meta.getPersistentDataContainer().set(Infuse.EFFECT_KEY, PersistentDataType.STRING, toString());
-        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
+        meta.getPersistentDataContainer().set(EFFECT_KEY, PersistentDataType.STRING, toString());
 
         if (augmented) {
             meta.setItemModel(AUG_KEY);
@@ -166,7 +167,7 @@ public abstract class InfuseEffect implements Listener {
         if (item.getType() != Material.POTION) return false;
         if (!item.hasItemMeta()) return false;
 
-        return key.equals(item.getItemMeta().getPersistentDataContainer().get(Infuse.EFFECT_KEY, PersistentDataType.STRING));
+        return key.equals(item.getItemMeta().getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING));
     }
 
     public static InfuseEffect fromItem(ItemStack item) {
@@ -174,7 +175,7 @@ public abstract class InfuseEffect implements Listener {
         if (item.getType() != Material.POTION) return null;
         if (!item.hasItemMeta()) return null;
 
-        String key = item.getItemMeta().getPersistentDataContainer().get(Infuse.EFFECT_KEY, PersistentDataType.STRING);
+        String key = item.getItemMeta().getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING);
         if (key == null) return null;
 
         return fromString(key);
@@ -187,7 +188,7 @@ public abstract class InfuseEffect implements Listener {
 
     /**
      * Deserializes an InfuseEffect from an int
-     *
+     * <br>
      * The first two digits of an infuse effect are the effect id.  IDs 0-12 are taken by the base Effects.
      * If the number is >= 100, then the effect will be converted to its augmented form.
      *

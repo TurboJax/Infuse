@@ -39,7 +39,6 @@ public class Infuse extends JavaPlugin implements Listener {
     private static Infuse instance;
 
     public static final Logger LOGGER = LoggerFactory.getLogger("Infuse");
-    public static final NamespacedKey EFFECT_KEY = new NamespacedKey("infuse", "effect_key");
 
     private final DataManager dataManager;
     private final MainConfig mainConfig;
