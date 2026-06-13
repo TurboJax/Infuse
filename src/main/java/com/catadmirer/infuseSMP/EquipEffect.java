@@ -31,7 +31,7 @@ public class EquipEffect implements Listener {
             List<InfuseEffect> effects = plugin.getMainConfig().joinEffects();
             if (effects.isEmpty()) return;
             InfuseEffect effect = effects.get(new Random().nextInt(effects.size()));
-            equipEffect(player, effect, "2");
+            equipEffect(player, effect, "1");
         }
     }
 
