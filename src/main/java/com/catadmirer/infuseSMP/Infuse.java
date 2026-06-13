@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -204,7 +203,7 @@ public class Infuse extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new Drop(this), this);
         Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(dataManager), this);
         Bukkit.getPluginManager().registerEvents(new Recipes(this), this);
-        Bukkit.getPluginManager().registerEvents(new EquipEffect(this), this);
+        Bukkit.getPluginManager().registerEvents(new EffectManager(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(new ClearEffects(dataManager), this);
 

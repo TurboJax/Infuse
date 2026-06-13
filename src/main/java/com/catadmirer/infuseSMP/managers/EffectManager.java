@@ -1,5 +1,7 @@
-package com.catadmirer.infuseSMP;
+package com.catadmirer.infuseSMP.managers;
 
+import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.events.EffectEquipEvent;
@@ -15,10 +17,10 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class EquipEffect implements Listener {
+public class EffectManager implements Listener {
     private final Infuse plugin;
 
-    public EquipEffect(Infuse plugin) {
+    public EffectManager(Infuse plugin) {
         this.plugin = plugin;
     }
 
@@ -43,10 +45,18 @@ public class EquipEffect implements Listener {
      * @param effect The effect to give the player
      */
     public void safeEquip(Player player, InfuseEffect effect) {
-        if (!equipEffect(player, effect, "1") && !equipEffect(player, effect, "2")) {
-            player.performCommand("rdrain");
-            equipEffect(player, effect, "2");
+        if (plugin.getDataManager().getEffect(player.getUniqueId(), "1") == null) {
+            equipEffect(player, effect, "1");
+            return;
         }
+
+        if (plugin.getDataManager().getEffect(player.getUniqueId(), "2") == null) {
+            equipEffect(player, effect, "2");
+            return;
+        }
+
+        player.performCommand("rdrain");
+        equipEffect(player, effect, "2");
     }
 
     /**
@@ -55,15 +65,21 @@ public class EquipEffect implements Listener {
      * @param player The player who will get the effect
      * @param effect The effect to give the player.
      * @param slot The slot to equip the effect into.
-     * 
-     * @return Returns false if the slot is already taken.
      */
-    private boolean equipEffect(Player player, InfuseEffect effect, String slot) {
+    private void equipEffect(Player player, InfuseEffect effect, String slot) {
         // Checking for an effect in the slot.
         InfuseEffect currentEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
-        if (currentEffect != null) return false;
+        if (currentEffect != null) return;
+
+        // Calling an EffectEquipEvent and stopping if it is canceled.
+        EffectEquipEvent event = new EffectEquipEvent(player, effect, slot);
+        if (!event.callEvent()) return;
+
+        // Unequipping the effect and updating the player data
+        currentEffect.unequip(player);
+        plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
         
-        // Equipping the effect to the slot.
+        // Equipping the effect in the slot.
         plugin.getDataManager().setEffect(player.getUniqueId(), slot, effect);
         new EffectEquipEvent(player, effect, slot).callEvent();
 
@@ -75,6 +91,20 @@ public class EquipEffect implements Listener {
         player.sendMessage(msg.toComponent());
 
         return true;
+    }
+
+    public void unequipEffect(Player player, String slot) {
+        // Getting the equipped effect
+        InfuseEffect currentEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
+        if (currentEffect == null) return;
+
+        // Calling an EffectUnequipEvent and stopping if it is canceled.
+        EffectUnequipEvent event = new EffectUnequipEvent(player, currentEffect, slot);
+        if (!event.callEvent()) return;
+
+        // Unequipping the effect and updating the player data
+        currentEffect.unequip(player);
+        plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
     }
 
     /**
