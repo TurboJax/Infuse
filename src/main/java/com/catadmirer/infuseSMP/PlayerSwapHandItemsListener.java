@@ -27,23 +27,22 @@ public class PlayerSwapHandItemsListener implements Listener {
     public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
         UUID playerUUID = player.getUniqueId();
-        String data = dataManager.getControlMode(playerUUID);
-        if (data.equals("offhand")) {
-            // Getting the effect equipped in each slot
+        if (!dataManager.getControlMode(playerUUID).equals("offhand")) return;
+
+        if (!player.isSneaking()) {
+            // Activating the left effect's spark if the player was not sneaking and the effect wasn't on cooldown.
             InfuseEffect lEffect = dataManager.getEffect(player.getUniqueId(), "1");
+            if (lEffect == null) return;
+            if (CooldownManager.isOnCooldown(playerUUID, lEffect.getKey())) return;
+            event.setCancelled(true);
+            lEffect.activateSpark(player);
+        } else {
+            // Activating the right effect's spark if the player was sneaking and the effect wasn't on cooldown.
             InfuseEffect rEffect = dataManager.getEffect(player.getUniqueId(), "2");
-
-            // Activating the left effect's spark if the player was sneaking and the effect wasn't on cooldown.
-            if (lEffect != null && !player.isSneaking() && !CooldownManager.isOnCooldown(playerUUID, lEffect.getKey())) {
-                event.setCancelled(true);
-                lEffect.activateSpark(player);
-            }
-
-            // Activating the right effect's spark if the player was not sneaking and the effect wasn't on cooldown.
-            if (rEffect != null && player.isSneaking() && !CooldownManager.isOnCooldown(playerUUID, rEffect.getKey())) {
-                event.setCancelled(true);
-                rEffect.activateSpark(player);
-            }
+            if (rEffect == null) return;
+            if (CooldownManager.isOnCooldown(playerUUID, rEffect.getKey())) return;
+            event.setCancelled(true);
+            rEffect.activateSpark(player);
         }
     }
 }
