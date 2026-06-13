@@ -16,11 +16,10 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 @NullMarked
-public class H2DataManager implements DataManager {
+public class H2DataManager extends AsyncDataManager {
     private DataCache cache;
     private final DataSource dataSource;
 
@@ -128,7 +127,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setExistingCount(InfuseEffect effect, int count) {
+    protected void reallySetExistingCount(InfuseEffect effect, int count) {
         // Updating the cache
         cache.setExistingCount(effect, count);
 
@@ -153,7 +152,8 @@ public class H2DataManager implements DataManager {
      *
      * @param player The player to create an entry for.
      */
-    public void createNewPlayer(OfflinePlayer player) {
+    private void createNewPlayer(OfflinePlayer player) {
+        // All calls are already async.  This does not need to be run through the service.
         String newPlayer = "INSERT OR IGNORE INTO player_data (player, offhand_control) VALUES (?, FALSE);";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(newPlayer)) {
@@ -170,7 +170,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
+    protected void reallySetTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
         // Updating the cache
         cache.setTrusted(player, allTrusted);
 
@@ -234,7 +234,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void addTrust(OfflinePlayer player, OfflinePlayer toTrust) {
+    protected void reallyAddTrust(OfflinePlayer player, OfflinePlayer toTrust) {
         // Updating the cache
         cache.addTrust(player, toTrust);
 
@@ -265,7 +265,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void removeTrust(OfflinePlayer player, OfflinePlayer untrusted) {
+    protected void reallyRemoveTrust(OfflinePlayer player, OfflinePlayer untrusted) {
         // Updating the cache
         cache.removeTrust(player, untrusted);
 
@@ -294,7 +294,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+    protected void reallySetEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
         // Updating the cache
         cache.setEffect(player, slot, effect);
 
@@ -328,7 +328,7 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setControlMode(OfflinePlayer player, String controlMode) {
+    protected void reallySetControlMode(OfflinePlayer player, String controlMode) {
         // Updating the cache
         cache.setControlMode(player, controlMode);
 
