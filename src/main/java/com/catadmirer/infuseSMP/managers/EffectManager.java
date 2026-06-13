@@ -24,16 +24,34 @@ public class EffectManager implements Listener {
         this.plugin = plugin;
     }
 
+    /**
+     * Handles logic for when a player joins the server.
+     * <p>
+     * It gives the player their starting effect if they haven't played before, and also enables the abilities for any effects the player has.
+     */
     @EventHandler
-    public void onFirstJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // Giving the player their starting effects if they haven't been given already
+        // Giving the player their starting effects if they haven't joined before
         if (!player.hasPlayedBefore() && plugin.getMainConfig().joinEffectsEnabled()) {
             List<InfuseEffect> effects = plugin.getMainConfig().joinEffects();
             if (effects.isEmpty()) return;
             InfuseEffect effect = effects.get(new Random().nextInt(effects.size()));
             equipEffect(player, effect, "1");
+        }
+
+        // Enabling each effect
+        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
+        if (effect != null) {
+            EffectEquipEvent e = new EffectEquipEvent(player, effect, "1");
+            if (e.callEvent()) effect.equip(player);
+        }
+
+        effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
+        if (effect != null) {
+            EffectEquipEvent e = new EffectEquipEvent(player, effect, "2");
+            if (e.callEvent()) effect.equip(player);
         }
     }
 
@@ -167,27 +185,6 @@ public class EffectManager implements Listener {
                     this.dropEffect(player, "2");
                 }
                 break;
-        }
-    }
-
-    /**
-     * Calling an EffectEquipEvent for each player that joins.
-     * 
-     * @param event The server PlayerJoinEvent to catch.
-     */
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
-        if (effect != null) {
-            EffectEquipEvent e = new EffectEquipEvent(player, effect, "1");
-            if (e.callEvent()) effect.equip(player);
-        }
-        
-        effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
-        if (effect != null) {
-            EffectEquipEvent e = new EffectEquipEvent(player, effect, "2");
-            if (e.callEvent()) effect.equip(player);
         }
     }
 
