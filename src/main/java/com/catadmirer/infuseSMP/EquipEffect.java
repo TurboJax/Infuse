@@ -67,6 +67,9 @@ public class EquipEffect implements Listener {
         plugin.getDataManager().setEffect(player.getUniqueId(), slot, effect);
         new EffectEquipEvent(player, effect, slot).callEvent();
 
+        // Activating the effect
+        effect.equip(player);
+
         Message msg = new Message(MessageType.EFFECT_EQUIPPED);
         msg.applyPlaceholder("effect_name", effect.getName());
         player.sendMessage(msg.toComponent());
