@@ -27,37 +27,6 @@ public class EffectManager implements Listener {
     }
 
     /**
-     * Handles logic for when a player joins the server.
-     * <p>
-     * It gives the player their starting effect if they haven't played before, and also enables the abilities for any effects the player has.
-     */
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-
-        // Giving the player their starting effects if they haven't joined before
-        if (!player.hasPlayedBefore() && plugin.getMainConfig().joinEffectsEnabled()) {
-            List<InfuseEffect> effects = plugin.getMainConfig().joinEffects();
-            if (effects.isEmpty()) return;
-            InfuseEffect effect = effects.get(new Random().nextInt(effects.size()));
-            equipEffect(player, effect, "1");
-        }
-
-        // Enabling each effect
-        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
-        if (effect != null) {
-            EffectEquipEvent e = new EffectEquipEvent(player, effect, "1");
-            if (e.callEvent()) effect.equip(player);
-        }
-
-        effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
-        if (effect != null) {
-            EffectEquipEvent e = new EffectEquipEvent(player, effect, "2");
-            if (e.callEvent()) effect.equip(player);
-        }
-    }
-
-    /**
      * Equips an effect in the primary or secondary slot.
      * If both slots are full, it drains the secondary slot and equips the new effect there.
      * 
@@ -65,24 +34,17 @@ public class EffectManager implements Listener {
      * @param effect The effect to give the player
      */
     public void safeEquip(Player player, InfuseEffect effect) {
-        if (plugin.getDataManager().getEffect(player.getUniqueId(), "1") == null) {
-            equipEffect(player, effect, "1");
-            return;
-        }
+        if (equipEffect(player, effect, "1")) return;
+        if (equipEffect(player, effect, "2")) return;
 
-        if (plugin.getDataManager().getEffect(player.getUniqueId(), "2") == null) {
-            equipEffect(player, effect, "2");
-            return;
-        }
-
-        player.performCommand("rdrain");
+        drainEffect(player, "2");
         equipEffect(player, effect, "2");
     }
 
     /**
      * Equips an effect in the specified slot.
      * Fails if the {@link EffectEquipEvent} is canceled.
-     * 
+     *
      * @param player The player who will get the effect
      * @param effect The effect to give the player.
      * @param slot The slot to equip the effect into.
@@ -297,20 +259,14 @@ public class EffectManager implements Listener {
         }
     }
 
-    /**
-     * Removes a player's effect from the specified slot and drops it on the ground.
-     * 
-     * @param player The player to remove an effect from.
-     * @param slot The slot to remove the effect from.
-     */
-    private void dropEffect(Player player, String slot) {
-        // Getting the equipped effect from the data file.
-        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
-        if (effect == null) return;
+    /** Unequips a players effects when they leave the game. */
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
 
-        // Removing the effect from the player.
-        plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
-        new EffectUnequipEvent(player, effect, slot).callEvent();
+        // Unequipping the player's effects
+        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
+        if (effect != null) effect.unequip(player);
 
         effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
         if (effect != null) effect.unequip(player);
