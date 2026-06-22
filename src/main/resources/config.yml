@@ -43,7 +43,7 @@ hit_counter_decay_seconds: 15
 
 join_effects_enabled: false
 
-join_effects: # Same Names from messages.yml
+join_effects:
   - ocean
   - emerald
   - fire
