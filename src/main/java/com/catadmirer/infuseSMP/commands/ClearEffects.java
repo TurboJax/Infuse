@@ -22,7 +22,7 @@ public class ClearEffects implements Listener, CommandExecutor {
         if (!command.getName().equalsIgnoreCase("cleareffects")) return false;
         
         if (args.length != 1) {
-            sender.sendMessage(new Message(MessageType.CLEAREFFECTS_USAGE).toComponent());
+            sender.sendMessage(new Message(MessageType.INFUSE_CLEAREFFECTS_USAGE).toComponent());
             return true;
         }
 

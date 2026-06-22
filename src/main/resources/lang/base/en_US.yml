@@ -53,13 +53,11 @@ infuse_cleareffects_success: "<green>Cleared %player_name%'s effects"
 infuse_cooldown_usage: "<red>Invalid Argument! Please use /infuse cooldown <player>"
 infuse_cooldown_success: "<green>Removed %player_name%'s cooldown"
 
-cleareffects_usage: "<red>Usage: /infuse clearEffects <player>"
-
 join_ability_notify: "<gray>Your ability mode is set to: %control_mode%"
 
-drain_success: "<green>You have drained your: %effect_name%"
+drain_success: "<green>You have drained your: <effect_name>"
 
-effect_equipped: "<green>You have equipped the %effect_name%"
+effect_equipped: "<green>You have equipped the <effect_name>"
 
 swap_no_effects: "<red>You do not have any effects equipped to swap."
 swap_success: "<green>Your Effects have been swapped."
