@@ -2,7 +2,6 @@ package com.catadmirer.infuseSMP.commands;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.MessageConfig;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.inventories.EffectChooser;
@@ -61,7 +60,6 @@ public class InfuseCommand implements CommandExecutor, TabCompleter {
                 }
 
                 plugin.getMainConfig().load();
-                MessageConfig.load(plugin);
                 plugin.getRecipeManager().reload();
                 player.sendMessage("Infuse configs reloaded");
                 break;

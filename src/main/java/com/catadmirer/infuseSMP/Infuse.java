@@ -69,9 +69,10 @@ public class Infuse extends JavaPlugin implements Listener {
         // Loading the Infuse plugin instance
         instance = this;
 
-        // Loading the messages
-        MessageConfig.load(this);
-        
+        // Loading the message translator
+        MessageTranslator translator = new MessageTranslator(this);
+        translator.loadAll();
+
         // Loading the config
         mainConfig.load();
         
@@ -79,7 +80,6 @@ public class Infuse extends JavaPlugin implements Listener {
         dataManager.load();
 
         // Applying config updates
-        MessageConfig.applyUpdates();
         mainConfig.applyUpdates();
         dataManager.applyUpdates();
 
