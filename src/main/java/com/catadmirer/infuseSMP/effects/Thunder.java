@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.*;
+import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -20,17 +21,10 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Thunder extends InfuseEffect {
-    private static final Map<UUID,Integer> hitTracker = new HashMap<>();
-    private static final Queue<Runnable> decayQueue = new ConcurrentLinkedQueue<>();
-
     private final Infuse plugin;
 
     public Thunder() {
@@ -47,9 +41,7 @@ public class Thunder extends InfuseEffect {
     public void equip(Player owner) {}
 
     @Override
-    public void unequip(Player owner) {
-        hitTracker.remove(owner.getUniqueId());
-    }
+    public void unequip(Player owner) {}
 
     @Override
     public void applyPassives(Player owner) {}
@@ -145,8 +137,8 @@ public class Thunder extends InfuseEffect {
      * Chain lightning functionality.
      * This is a recursive function that runs up to 10 times to strike nearby entities with lightning.
      * The function should be called with a list containing only the attacking entity.
-     * 
-     * @param targets The list of targets that have been hit by the lightning bolt, with the exception of the first entry which is the attacker.
+     *
+     * @param targets The list of targets that have been hit by the lightning bolt, except for the first entry which is the attacker.
      * 
      * @throws InvalidParameterException If the <code>targets</code> parameter is null or empty.
      */
@@ -160,100 +152,45 @@ public class Thunder extends InfuseEffect {
         // TODO: make config
         double radius = 3;
 
+        // Finding the next target.
         for (Entity entity : targets.getLast().getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof Player target)) continue;
             if (targets.contains(target)) continue;
 
-            // Scheduling the lightning to strike the target 1 second after the next
-            Bukkit.getScheduler().runTaskLater(plugin, () -> strikeLighting(target, attacker), 20L * (targets.size() - 1));
+            // Target found!  Striking them then searching for the next target after 1 second.
+            strikeLighting(target, attacker);
 
-            // Adding the target to the list
-            targets.add(target);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                // Adding the target to the list
+                targets.add(target);
 
-            // Recursion babyyy
-            chainLightning(targets);
+                // Recursion babyyy
+                chainLightning(targets);
+            }, 20L);
+
             return;
         }
     }
 
-    //// Listeners ////
-    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
+    // Listeners //
+    // These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     /**
-     * Tracking the number of hits a player has.
-     * Yes, this is a copy of the stuff in {@link HitTracker}.  I can't figure out a good way to make it count every 5 hits.
-     * 
-     * @param event A {@link EntityDamageByEntityEvent}
+     * Strikes a player with lightning and chains it
+     *
+     * @param event A {@link TenHitEvent}.
      */
-    @EventHandler
-    public void onPlayerHit(EntityDamageByEntityEvent event) {
-        // Making sure both entities are players
-        if (!(event.getDamager() instanceof Player attacker)) return;
-        if (!(event.getEntity() instanceof Player target)) return;
+    public void onTenHitEvent(TenHitEvent event) {
+        Player attacker = event.getAttacker();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
 
-        // Making sure it wasn't a lightning bolt
-        if (event.getDamageSource().getDamageType().equals(DamageType.LIGHTNING_BOLT)) return;
+        Player target = event.getTarget();
 
-        // Making sure it counts as a normal hit
-        // Vanilla attack cooldown needs to be at 84.8% to be a normal hit.
-        if (attacker.getAttackCooldown() < 0.85) {
-            Infuse.LOGGER.debug("[Thunder] Hit ignored due to being under attack cooldown threshold.");
-            return;
-        }
+        // Striking the attacked player
+        strikeLighting(target, attacker);
 
-        // Incrementing the hit counter
-        int hits = hitTracker.getOrDefault(attacker.getUniqueId(), 0) + 1;
-        Infuse.LOGGER.debug("[Thunder] {}'s thunder hit counter is {}.", attacker.getName(), hits);
-
-        // In stormy weather, the player only needs 5 hits to activate chain lightning
-        int hitGoal = attacker.getWorld().isClearWeather() ? 10 : 5;
-        if (hits >= hitGoal) {
-            hitTracker.put(attacker.getUniqueId(), 0);
-
-            // Removing x objects from the queue
-            for (int i = 0; i < hitGoal; i++) {
-                if (decayQueue.isEmpty()) continue;
-                decayQueue.remove();
-            }
-
-            // Striking the attacked player
-            strikeLighting(target, attacker);
-
-            // Continuing the chain
-            chainLightning(new ArrayList<>(List.of(attacker, target)));
-            
-            return;
-        }
-
-        // Saving the hit count
-        hitTracker.put(attacker.getUniqueId(), hits);
-
-        // Having the hit counter decay over time
-        int hitCounterDecaySeconds = plugin.getMainConfig().hitCounterDecaySeconds();
-        if (hitCounterDecaySeconds < 1) return;
-
-        Infuse.LOGGER.debug("[Thunder] Adding item to decay queue");
-        decayQueue.add(() -> {
-            // Skipping if the attacker has left the game
-            if (!attacker.isConnected()) return;
-
-            Infuse.LOGGER.debug("[Thunder] Decrementing hit counter");
-            int curHits = hitTracker.get(attacker.getUniqueId());
-
-            Infuse.LOGGER.debug("[Thunder] {}'s hit counter is {}.", attacker.getName(), curHits - 1);
-            hitTracker.put(attacker.getUniqueId(), curHits - 1);
-        });
-        Infuse.LOGGER.debug("{} items in queue", decayQueue.size());
-        
-        // Running the decay task if it is still around
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Runnable decayTask = decayQueue.peek();
-            if (decayTask != null) {
-                decayQueue.remove();
-                decayTask.run();
-            }
-        }, hitCounterDecaySeconds * 20);
+        // Continuing the chain after 1 second
+        Bukkit.getScheduler().runTaskLater(plugin, _ -> chainLightning(new ArrayList<>(List.of(attacker, target))), 20L);
     }
 
     @EventHandler

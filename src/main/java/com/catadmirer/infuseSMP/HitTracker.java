@@ -1,5 +1,7 @@
 package com.catadmirer.infuseSMP;
 
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.effects.Thunder;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,9 +46,16 @@ public class HitTracker implements Listener {
 
         // Incrementing the hit counter
         int hits = hitTracker.getOrDefault(attacker.getUniqueId(), 0) + 1;
+
+        // Incrementing by 2 if the thunder effect is registered, the attacker has it, and if they are in the rain.
+        Thunder thunder = new Thunder();
+        if (InfuseEffect.isRegistered(thunder) && plugin.getDataManager().hasEffect(attacker, thunder) && attacker.isInRain()) {
+            hits += 1;
+        }
+
         Infuse.LOGGER.debug("{}'s hit counter is {}.", attacker.getName(), hits);
 
-        if (hits == 10) {
+        if (hits >= 10) {
             // Calling the TenHitEvent
             TenHitEvent tenHit = new TenHitEvent(attacker, target);
             tenHit.callEvent();
