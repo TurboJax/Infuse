@@ -161,7 +161,7 @@ public class DataManager {
         if (effect == null) {
             config.set(key, null);
         } else {
-            config.set(key, effect.getKey());
+            config.set(key, effect.toString());
         }
         save();
     }
