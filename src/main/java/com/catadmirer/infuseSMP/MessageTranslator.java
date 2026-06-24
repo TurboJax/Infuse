@@ -26,7 +26,13 @@ public class MessageTranslator {
         }
 
         // Getting the translation
-        return getLocale(locale).getString(key.toLowerCase());
+        FileConfiguration conf = getLocale(locale);
+
+        if (conf.isString(key.toLowerCase())) {
+            return conf.getString(key.toLowerCase());
+        } else {
+            return String.join("\n", conf.getStringList(key.toLowerCase()));
+        }
     }
 
     public void loadAll() {
