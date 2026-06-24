@@ -70,8 +70,7 @@ public class Infuse extends JavaPlugin implements Listener {
         instance = this;
 
         // Loading the message translator
-        MessageTranslator translator = new MessageTranslator(this);
-        translator.loadAll();
+        new MessageTranslator().loadAll();
 
         // Loading the config
         mainConfig.load();
