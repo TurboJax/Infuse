@@ -69,6 +69,9 @@ public class Infuse extends JavaPlugin implements Listener {
         // Loading the Infuse plugin instance
         instance = this;
 
+        // Registering the vanilla effects
+        registerEffects();
+
         // Loading the message translator
         new MessageTranslator().loadAll();
 
@@ -107,9 +110,6 @@ public class Infuse extends JavaPlugin implements Listener {
         } else {
             LOGGER.warn("PlaceholderAPI is not installed, so custom placeholders won't work.");
         }
-
-        // Registering the vanilla effects
-        registerEffects();
 
         // Logging the success message
         LOGGER.info("Infuse Plugin has been enabled!");
