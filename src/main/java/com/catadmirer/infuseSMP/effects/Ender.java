@@ -155,7 +155,7 @@ public class Ender extends InfuseEffect {
     public void cursePlayer(UUID playerUUID, long delayTicks) {
         cursedPlayers.add(playerUUID);
 
-        Bukkit.getScheduler().runTaskLater(plugin, _ -> cursedPlayers.remove(playerUUID), delayTicks);
+        Bukkit.getScheduler().runTaskLater(plugin, t -> cursedPlayers.remove(playerUUID), delayTicks);
     }
 
     //// Listeners ////

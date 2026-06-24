@@ -190,7 +190,7 @@ public class Thunder extends InfuseEffect {
         strikeLighting(target, attacker);
 
         // Continuing the chain after 1 second
-        Bukkit.getScheduler().runTaskLater(plugin, _ -> chainLightning(new ArrayList<>(List.of(attacker, target))), 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, t -> chainLightning(new ArrayList<>(List.of(attacker, target))), 20L);
     }
 
     @EventHandler

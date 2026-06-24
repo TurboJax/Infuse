@@ -141,7 +141,7 @@ public class Infuse extends JavaPlugin implements Listener {
 
         getCommand("draw").setExecutor(new Draw());
 
-        getCommand("controls").setExecutor((sender, _, _, args) -> {
+        getCommand("controls").setExecutor((sender, a, b, args) -> {
             // Making sure only players can run the command
             if (!(sender instanceof Player player)) {
                 sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
@@ -168,7 +168,7 @@ public class Infuse extends JavaPlugin implements Listener {
             player.addAttachment(this, "ability.use", choice.equals("command"));
             return true;
         });
-        getCommand("controls").setTabCompleter((_, _, _, args) -> {
+        getCommand("controls").setTabCompleter((a, b, c, args) -> {
             if (args.length == 1) {
                 return Stream.of("command", "offhand").filter(opt -> opt.startsWith(args[0])).toList();
             }
