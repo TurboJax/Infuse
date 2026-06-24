@@ -1,50 +1,33 @@
 package com.catadmirer.infuseSMP;
 
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.Translator;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.*;
-import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Set;
 
 @NullMarked
-public class MessageTranslator implements Translator {
-    // Mostly here just for looks
-    // Doesn't really do anything
-    public static final Set<Locale> SUPPORTED_LOCALES = Set.of(Locale.US);
+public class MessageTranslator {
+    public static final Set<Locale> SUPPORTED_LOCALES = Set.of(Locale.US, Locale.of("es"));
 
-    private final Infuse plugin;
+    private final Infuse plugin = Infuse.getInstance();
 
-    public MessageTranslator(Infuse plugin) {
-        this.plugin = plugin;
-
-        GlobalTranslator.translator().addSource(this);
-    }
-
-    @Override
-    public Key name() {
-        return Key.key("infuse:main");
-    }
-
-    @Override
     @Nullable
-    public MessageFormat translate(String key, Locale locale) {
+    public String translate(String key) {
+        // Getting the locale from the config
+        Locale locale = plugin.getMainConfig().lang();
+
         // Defaulting to the en_US locale
-        if (!SUPPORTED_LOCALES.contains(locale)) locale = Locale.US;
+        if (!SUPPORTED_LOCALES.contains(locale)) {
+            Infuse.LOGGER.warn("Locale \"{}\" not recognized.  Falling back to en_US.", locale);
+            locale = Locale.US;
+        }
 
-        FileConfiguration config = getLocale(locale);
-        String fmt = config.getString(key.toLowerCase());
-
-        if (fmt == null) return null;
-
-        return new MessageFormat(fmt, locale);
+        // Getting the translation
+        return getLocale(locale).getString(key.toLowerCase());
     }
 
     public void loadAll() {

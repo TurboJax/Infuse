@@ -1,101 +1,103 @@
 package com.catadmirer.infuseSMP;
 
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TranslatableComponent;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.TagPattern;
-import net.kyori.adventure.text.minimessage.translation.Argument;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Message {
     // Text serializers
     public static final MiniMessage mm = MiniMessage.miniMessage();
-    public static final LegacyComponentSerializer la = LegacyComponentSerializer.legacyAmpersand();
 
-    private TranslatableComponent message;
+    private static final MessageTranslator translator = new MessageTranslator();
+
+    private String message;
+    private final List<String> placeholders;
 
     public Message(MessageType messageType) {
-        message = Component.translatable().key(messageType.name().toLowerCase()).build();
+        this.message = translator.translate(messageType.name().toLowerCase());
+        this.placeholders = new ArrayList<>(messageType.placeholders);
+    }
+
+    public void applyPlaceholder(@TagPattern String placeholder, Component component) {
+        applyPlaceholder(placeholder, mm.serialize(component));
     }
 
     public void applyPlaceholder(@TagPattern String placeholder, Object value) {
-        this.message = message.arguments(Argument.component(placeholder, mm.deserialize(String.valueOf(value))));
-    }
+        placeholders.remove(placeholder);
 
-    public void applyPlaceholders(Map<String,Object> placeholders) {
-        placeholders.forEach(this::applyPlaceholder);
+        this.message = message.replace("%" + placeholder + "%", String.valueOf(value));
     }
 
     public List<Component> toComponentList() {
-        if (!message.arguments().isEmpty()) {
+        if (!placeholders.isEmpty()) {
             throw new IllegalStateException("Not all placeholders have been registered.");
         }
 
-        return Stream.concat(Stream.of("<i:false>"), Stream.of(mm.serialize(message).split("\n"))).map(mm::deserialize).toList();
+        return Stream.of(("<i:false>" + message).split("\n")).map(mm::deserialize).toList();
     }
 
     public Component toComponent() {
-        if (!message.arguments().isEmpty()) {
+        if (!placeholders.isEmpty()) {
             throw new IllegalStateException("Not all placeholders have been registered.");
         }
 
-        return Component.text("").decoration(TextDecoration.ITALIC, false).append(message);
+        return mm.deserialize("<i:false>" + message);
     }
 
     /**
      * Helper function that allows minimessage translation for an arbitrary string.
      *
-     * @param message The minimessage string to translate
+     * @param message A minimessage string to translate
      *
      * @return The {@link Component} that can be sent to players.
      */
     public static Component toComponent(String message) {
-        return MiniMessage.miniMessage().deserialize("<i:false>" + message);
+        return mm.deserialize("<i:false>" + message);
     }
 
     public enum MessageType {
-        EFFECT_BROADCAST,
-        DISCORD_BROADCAST,
-        EFFECT_FINISHED,
-        REGULAR_BROADCAST,
-        SLOT_EMPTY,
-        EFFECT_NONE_EQUIPPED,
+        EFFECT_BROADCAST("player", "item", "x", "y", "z", "dimension"),
+        DISCORD_BROADCAST("player", "item", "x", "y", "z", "dimension"),
+        EFFECT_FINISHED("item"),
+        REGULAR_BROADCAST("item", "x", "y", "z", "dimension"),
+        SLOT_EMPTY("slot"),
+        EFFECT_NONE_EQUIPPED("slot"),
         WITHDRAW_INVALID,
         TRUST_CONSOLE_USAGE,
-        TRUST_INCORRECT_USAGE,
+        TRUST_INCORRECT_USAGE("label", "player"),
         TRUST_NO_PLAYER,
         TRUST_SELF,
-        TRUST_ADDED,
-        TRUST_ALREADY_TRUSTED,
-        TRUST_REMOVED,
-        TRUST_NOT_TRUSTED,
+        TRUST_ADDED("target"),
+        TRUST_ALREADY_TRUSTED("target"),
+        TRUST_REMOVED("target"),
+        TRUST_NOT_TRUSTED("target"),
         EFFECT_NO_BREWING,
-        DEATH_MESSAGE,
+        DEATH_MESSAGE("victim", "killer"),
         CONTROLS_USAGE,
         CONTROLS_INVALID_PARAM,
         INFUSE_INVALID_PARAM,
-        INFUSE_INVALID_SLOT,
+        INFUSE_INVALID_SLOT("slot"),
         INFUSE_CONTROLS_USAGE,
-        INFUSE_CONTROLS_SUCCESS,
+        INFUSE_CONTROLS_SUCCESS("control_mode"),
         INFUSE_SETEFFECT_USAGE,
-        INFUSE_SETEFFECT_SUCCESS,
+        INFUSE_SETEFFECT_SUCCESS("slot", "player_name", "effect_name"),
         INFUSE_GIVEEFFECT_USAGE,
-        INFUSE_GIVEEFFECT_SUCCESS,
+        INFUSE_GIVEEFFECT_SUCCESS("effect_color", "effect_name"),
         INFUSE_CLEAREFFECTS_USAGE,
-        INFUSE_CLEAREFFECTS_SUCCESS,
+        INFUSE_CLEAREFFECTS_SUCCESS("player_name"),
         INFUSE_COOLDOWN_USAGE,
-        INFUSE_COOLDOWN_SUCCESS,
-        JOIN_ABILITY_NOTIFY,
-        DRAIN_SUCCESS,
+        INFUSE_COOLDOWN_SUCCESS("player_name"),
+        JOIN_ABILITY_NOTIFY("control_mode"),
+        DRAIN_SUCCESS("effect_name"),
         DRAIN_CANCELLED,
-        EFFECT_EQUIPPED,
+        EFFECT_EQUIPPED("effect_name"),
         SWAP_NO_EFFECTS,
         SWAP_SUCCESS,
-        THIEF_STEAL,
+        THIEF_STEAL("victim", "effect_name"),
         RECIPE_NOT_FOUND,
         RECIPE_DISABLED,
         ERROR_INV_FULL,
@@ -168,5 +170,11 @@ public class Message {
         THIEF_LORE,
         AUG_THIEF_NAME,
         AUG_THIEF_LORE;
+
+        public final List<String> placeholders;
+
+        private MessageType(String... placeholders) {
+            this.placeholders = List.of(placeholders);
+        }
     }
 }
