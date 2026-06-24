@@ -59,7 +59,11 @@ public class EffectManager implements Listener {
         if (equipped != null && !override) return new EquipResult(EquipResultType.FAIL);
 
         // Unequipping the old effect
-        if (equipped != null) equipped.unequip(player);
+        if (equipped != null) {
+            EquipResult res = unequipEffect(player, slot);
+
+            if (res.type != EquipResultType.SUCCESS) return new EquipResult(res.type, effect);
+        }
 
         // Equipping the effect and updating the player data
         effect.equip(player);
