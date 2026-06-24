@@ -22,6 +22,10 @@ public class Message {
         this.placeholders = new ArrayList<>(messageType.placeholders);
     }
 
+    public void applyPlaceholder(@TagPattern String placeholder, Message value) {
+        applyPlaceholder(placeholder, mm.serialize(value.toComponent()));
+    }
+
     public void applyPlaceholder(@TagPattern String placeholder, Component component) {
         applyPlaceholder(placeholder, mm.serialize(component));
     }
