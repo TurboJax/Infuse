@@ -21,7 +21,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -165,12 +164,5 @@ public class Heart extends InfuseEffect {
         } else {
             player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 0));
         }
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        AttributeInstance maxHealth = event.getPlayer().getAttribute(Attribute.MAX_HEALTH);
-        maxHealth.removeModifier(heartBoost);
-        maxHealth.removeModifier(heartSparkBoost);
     }
 }
