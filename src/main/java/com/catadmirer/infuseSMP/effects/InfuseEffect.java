@@ -39,6 +39,10 @@ public abstract class InfuseEffect implements Listener {
         this.ritualColor = ritualColor;
     }
 
+    public static boolean isRegistered(InfuseEffect effect) {
+        return REGISTERED_EFFECTS.containsKey(effect.id);
+    }
+
     public static boolean register(InfuseEffect effect) {
         if (effect.id > 100) {
             Infuse.LOGGER.warn("Effect id {} for {} is invalid.  Effect ids cannot be >100.", effect.id, effect.key);
