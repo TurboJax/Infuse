@@ -4,11 +4,11 @@ import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class MainConfig {
@@ -86,6 +86,10 @@ public class MainConfig {
         }
 
         return false;
+    }
+
+    public Locale lang() {
+        return Locale.of(config.getString("lang", "en_us"));
     }
 
     public boolean allowInfiniteEffects() {
