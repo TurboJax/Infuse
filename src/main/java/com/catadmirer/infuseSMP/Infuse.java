@@ -108,6 +108,9 @@ public class Infuse extends JavaPlugin implements Listener {
             LOGGER.warn("PlaceholderAPI is not installed, so custom placeholders won't work.");
         }
 
+        // Registering the vanilla effects
+        registerEffects();
+
         // Logging the success message
         LOGGER.info("Infuse Plugin has been enabled!");
     }
@@ -232,6 +235,25 @@ public class Infuse extends JavaPlugin implements Listener {
         if (mainConfig.enableThief()) {
             getServer().getPluginManager().registerEvents(new Thief(), this);
         }
+    }
+
+    private void registerEffects() {
+        InfuseEffect.register(new Emerald());
+        InfuseEffect.register(new Ender());
+        InfuseEffect.register(new Feather());
+        InfuseEffect.register(new Fire());
+        InfuseEffect.register(new Frost());
+        InfuseEffect.register(new Haste());
+        InfuseEffect.register(new Heart());
+        InfuseEffect.register(new Invis());
+        InfuseEffect.register(new Ocean());
+        InfuseEffect.register(new Regen());
+        InfuseEffect.register(new Speed());
+        InfuseEffect.register(new Strength());
+        InfuseEffect.register(new Thunder());
+
+        if (mainConfig.enableApophis()) InfuseEffect.register(new Apophis());
+        if (mainConfig.enableThief()) InfuseEffect.register(new Thief());
     }
 
     @EventHandler
