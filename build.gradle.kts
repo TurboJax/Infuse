@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.catadmirer"
-version = "2.4.5-beta1"
+version = "2.4.5-beta2"
 
 repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
