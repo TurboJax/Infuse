@@ -6,24 +6,23 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.File;
-import java.util.Locale;
 import java.util.Set;
 
 @NullMarked
 public class MessageTranslator {
-    public static final Set<Locale> SUPPORTED_LOCALES = Set.of(Locale.US, Locale.of("es"));
+    public static final Set<String> SUPPORTED_LOCALES = Set.of("en_US", "es");
 
     private final Infuse plugin = Infuse.getInstance();
 
     @Nullable
     public String translate(String key) {
         // Getting the locale from the config
-        Locale locale = plugin.getMainConfig().lang();
+        String locale = plugin.getMainConfig().lang();
 
         // Defaulting to the en_US locale
         if (!SUPPORTED_LOCALES.contains(locale)) {
             Infuse.LOGGER.warn("Locale \"{}\" not recognized.  Falling back to en_US.", locale);
-            locale = Locale.US;
+            locale = "en_US";
         }
 
         // Getting the translation
@@ -34,11 +33,11 @@ public class MessageTranslator {
         SUPPORTED_LOCALES.forEach(this::loadLocale);
     }
 
-    public void loadLocale(Locale locale) {
+    public void loadLocale(String locale) {
         plugin.saveResource("lang/base/" + locale + ".yml", true);
     }
 
-    public FileConfiguration getLocale(Locale locale) {
+    public FileConfiguration getLocale(String locale) {
         File baseLocaleFile = new File(plugin.getDataFolder(), "lang/base/" + locale + ".yml");
         File customLocaleFile = new File(plugin.getDataFolder(), "lang/" + locale + ".yml");
 

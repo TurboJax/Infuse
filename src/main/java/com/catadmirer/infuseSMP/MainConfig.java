@@ -8,7 +8,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 public class MainConfig {
@@ -88,8 +87,8 @@ public class MainConfig {
         return false;
     }
 
-    public Locale lang() {
-        return Locale.of(config.getString("lang", "en_us"));
+    public String lang() {
+        return config.getString("lang", "en_US");
     }
 
     public boolean allowInfiniteEffects() {
