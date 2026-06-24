@@ -260,9 +260,7 @@ public class Infuse extends JavaPlugin implements Listener {
             .uri(URI.create("https://api.modrinth.com/v2/project/infusesmp/version"))
             .build();
 
-        HttpClient client = HttpClient.newHttpClient();
-
-        try {
+        try (HttpClient client = HttpClient.newHttpClient()) {
             HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
 
             // Handling http error codes
