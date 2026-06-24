@@ -43,10 +43,6 @@
             <AppenderRef ref="Async"/>
         </Root>
         <!-- Allowing the Infuse logger to log at the DEBUG level -->
-        <Logger name="Infuse" level="DEBUG">
-            <AppenderRef ref="File"/>
-            <AppenderRef ref="TerminalConsole"/>
-            <AppenderRef ref="ServerGuiConsole"/>
-        </Logger>
+        <Logger name="Infuse" level="DEBUG" />
     </Loggers>
 </Configuration>
