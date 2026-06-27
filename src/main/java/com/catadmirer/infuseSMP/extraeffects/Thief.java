@@ -64,6 +64,7 @@ public class Thief extends InfuseEffect {
     public void activateSpark(Player owner) {
         UUID playerUUID = owner.getUniqueId();
         if (CooldownManager.isOnCooldown(playerUUID, "thief")) return;
+        if (CooldownManager.isOnCooldown(playerUUID, "thief_stolen")) return;
 
         owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
