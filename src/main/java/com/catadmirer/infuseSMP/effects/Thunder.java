@@ -150,6 +150,7 @@ public class Thunder extends InfuseEffect {
         // Finding the next target.
         for (Entity entity : targets.getLast().getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof Player target)) continue;
+            if (plugin.getDataManager().isTrusted(attacker, target)) continue;
             if (targets.contains(target)) continue;
 
             // Target found!  Striking them then searching for the next target after 1 second.
@@ -198,8 +199,12 @@ public class Thunder extends InfuseEffect {
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
 
         // Only summoning lightning if the target is a living entity
-        if (event.getEntity() instanceof LivingEntity target) {
-            strikeLighting(target, attacker);
+        if (!(event.getEntity() instanceof LivingEntity target)) return;
+
+        if (target instanceof Player p) {
+            if (plugin.getDataManager().isTrusted(attacker, p)) return;
         }
+
+        strikeLighting(target, attacker);
     }
 }
