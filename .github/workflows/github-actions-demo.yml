@@ -1,18 +1,40 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Build Infuse versions
 on: [push]
+
 jobs:
-  Explore-GitHub-Actions:
+  build-21:
     runs-on: ubuntu-latest
+    env:
+      INFUSE_MINECRAFT: 1.21.11
+      INFUSE_JVM: 21
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
+      - name: Checkout sources
         uses: actions/checkout@v6
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: "Running build"
+        run: ./gradlew build
+      - run: ls ./build/libs
+  build-25:
+    runs-on: ubuntu-latest
+    env:
+      INFUSE_MINECRAFT: 26.1.2
+      INFUSE_JVM: 25
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: "Running build"
+        run: ./gradlew build
+      - run: ls ./build/libs
