@@ -2,16 +2,14 @@ package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperEntity;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.Particle.DustOptions;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DamageType;
@@ -28,30 +26,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Thunder extends InfuseEffect {
+public class Thunder extends BukkitEffect {
     public Thunder() {
         this(false);
     }
 
     public Thunder(boolean augmented) {
-        super("thunder", EffectIds.THUNDER, augmented, EffectConstants.potionColor(EffectIds.THUNDER), EffectConstants.ritualColor(EffectIds.THUNDER));
+        super(EffectIds.THUNDER, "thunder", augmented, EffectConstants.potionColor(EffectIds.THUNDER), EffectConstants.ritualColor(EffectIds.THUNDER));
     }
 
     @Override
-    public void equip(Player owner) {}
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {}
 
     @Override
-    public void unequip(Player owner) {}
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {}
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
         UUID uuid = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         if (CooldownManager.isOnCooldown(uuid, "thunder")) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(owner, this)) return;
+        if (!InfuseProvider.getInstance().getRegionBlocker().canUseSpark(owner)) return;
 
-        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -60,7 +59,7 @@ public class Thunder extends InfuseEffect {
         CooldownManager.setTimes(uuid, "thunder", duration, cooldown);
 
         long durationTicks = duration * 20;
-        World world = owner.getWorld();
+        World world = player.getWorld();
 
         final double baseRadius = plugin.getMainConfig().thunderSparkBaseRadius();
         final double radiusBoostPerPlayer = plugin.getMainConfig().thunderSparkPerPlayerBoostRadius();
@@ -78,7 +77,7 @@ public class Thunder extends InfuseEffect {
                 // Calculating the radius
                 double radius = baseRadius;
                 while (true) {
-                    long nearbyPlayers = world.getNearbyEntities(owner.getLocation(), radius, radius, radius).stream().filter(p -> p instanceof Player).count();
+                    long nearbyPlayers = world.getNearbyEntities(player.getLocation(), radius, radius, radius).stream().filter(p -> p instanceof Player).count();
                     double tmp = baseRadius + radiusBoostPerPlayer * nearbyPlayers;
                     if (tmp == radius) break;
 
@@ -86,12 +85,12 @@ public class Thunder extends InfuseEffect {
                 }
 
                 // Striking all players within the radius
-                for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
+                for (Entity entity : world.getNearbyEntities(player.getLocation(), radius, radius, radius)) {
                     if (!(entity instanceof Player target)) continue;
-                    if (plugin.getDataManager().isTrusted(target, owner)) continue;
-                    if (!RegionBlocker.getInstance().canBeTargetedBySpark(target)) continue;
+                    if (plugin.getDataManager().isTrusted(target, player)) continue;
+                    if (!InfuseProvider.getInstance().getRegionBlocker().canBeTargetedBySpark(new PaperPlayer(target))) continue;
 
-                    strikeLighting(target, owner);
+                    strikeLighting(target, player);
                 }
 
                 this.ticksElapsed += 20;
@@ -146,7 +145,7 @@ public class Thunder extends InfuseEffect {
         if (targets.isEmpty()) throw new InvalidParameterException("targets list needs to have the attacker in the front");
 
         Player attacker = targets.getFirst();
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         // TODO: make config
         double radius = 3;
@@ -156,7 +155,7 @@ public class Thunder extends InfuseEffect {
             if (!(entity instanceof Player target)) continue;
             if (targets.contains(target)) continue;
             if (plugin.getDataManager().isTrusted(attacker, target)) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(entity, this)) return;
+            if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperEntity(entity), this)) return;
 
             // Target found!  Striking them then searching for the next target after 1 second.
             strikeLighting(target, attacker);
@@ -185,10 +184,10 @@ public class Thunder extends InfuseEffect {
     public void onTenHitEvent(TenHitEvent event) {
         Player attacker = event.getAttacker();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         Player target = event.getTarget();
-        if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(target), this)) return;
 
         // Striking the attacked player
         strikeLighting(target, attacker);
@@ -205,12 +204,12 @@ public class Thunder extends InfuseEffect {
         // Making sure the shooter has the thunder effect
         if (!(trident.getShooter() instanceof Player attacker)) return;
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         // Only summoning lightning if the target is a living entity
         if (!(event.getEntity() instanceof LivingEntity target)) return;
         if (target instanceof Player p && plugin.getDataManager().isTrusted(attacker, p)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperEntity(target), this)) return;
 
         strikeLighting(target, attacker);
     }

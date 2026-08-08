@@ -2,10 +2,12 @@ package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperEntity;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.bukkit.util.ItemUtil;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
@@ -22,32 +24,33 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 
 import java.util.UUID;
 
-public class Strength extends InfuseEffect {
+public class Strength extends BukkitEffect {
     public Strength() {
         this(false);
     }
 
     public Strength(boolean augmented) {
-        super("strength", EffectIds.STRENGTH, augmented, EffectConstants.potionColor(EffectIds.STRENGTH), EffectConstants.ritualColor(EffectIds.STRENGTH));
+        super(EffectIds.STRENGTH, "strength", augmented, EffectConstants.potionColor(EffectIds.STRENGTH), EffectConstants.ritualColor(EffectIds.STRENGTH));
     }
 
     @Override
-    public void equip(Player owner) {}
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {}
 
     @Override
-    public void unequip(Player owner) {}
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {}
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
         UUID uuid = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         // Skipping players on cooldown
         if (CooldownManager.isOnCooldown(uuid, "strength")) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(owner, this)) return;
+        if (!InfuseProvider.getInstance().getRegionBlocker().canUseSpark(owner)) return;
 
         // Playing sounds
-        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -83,14 +86,14 @@ public class Strength extends InfuseEffect {
     public void extraDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         // Damage boost
         double damage = event.getDamage();
         damage += (attacker.getAttribute(Attribute.MAX_HEALTH).getValue() - attacker.getHealth()) * 0.3;
 
         // Spark auto-crit
-        if (!event.isCritical() && CooldownManager.isEffectActive(attacker.getUniqueId(), "strength") && !RegionBlocker.getInstance().isEffectBlocked(event.getEntity(), this)) {
+        if (!event.isCritical() && CooldownManager.isEffectActive(attacker.getUniqueId(), "strength") && !InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperEntity(event.getEntity()), this)) {
             // crit dmg boost
             damage *= 1.35;
 
@@ -137,7 +140,7 @@ public class Strength extends InfuseEffect {
 
         // Making sure the shooter has the strength effect
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(player), this)) return;
 
         // Increasing the piercing level of the shot arrow.
         if (event.getProjectile() instanceof Arrow arrow) {
@@ -150,7 +153,7 @@ public class Strength extends InfuseEffect {
         Player attacker = event.getAttacker();
 
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (InfuseProvider.getInstance().getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         // TODO: Reveal armor durability
     }
