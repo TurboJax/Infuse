@@ -6,4 +6,6 @@ public interface Player {
     UUID getUniqueId();
 
     Location getLocation();
+
+    World getWorld();
 }

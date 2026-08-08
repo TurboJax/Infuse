@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.bukkit.platform;
 
 import com.catadmirer.infuseSMP.platform.Location;
+import com.catadmirer.infuseSMP.platform.World;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -20,6 +21,11 @@ public class PaperPlayer implements com.catadmirer.infuseSMP.platform.Player {
     @Override
     public Location getLocation() {
         return new PaperLocation(handle.getLocation());
+    }
+
+    @Override
+    public World getWorld() {
+        return new PaperWorld(handle.getWorld());
     }
 
     public Player toBukkit() {
