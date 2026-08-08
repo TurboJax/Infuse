@@ -1,5 +1,9 @@
 package com.catadmirer.infuseSMP.platform;
 
-public class Player {
-    
+import java.util.UUID;
+
+public interface Player {
+    UUID getUniqueId();
+
+    Location getLocation();
 }
