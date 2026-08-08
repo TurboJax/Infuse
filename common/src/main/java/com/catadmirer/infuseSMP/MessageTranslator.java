@@ -15,15 +15,15 @@ public class MessageTranslator {
     private final File baseFolder;
 
     public MessageTranslator() {
-        this.plugin = Infuse.getInstance();
-        this.langFolder = new File(plugin.infuseDir(), "lang");
-        this.baseFolder = new File(plugin.infuseDir(), "lang/base");
+        this.plugin = InfuseProvider.getInstance();
+        this.langFolder = new File(plugin.getInfuseFolder(), "lang");
+        this.baseFolder = new File(plugin.getInfuseFolder(), "lang/base");
     }
 
     @Nullable
     public String translate(String key) {
         // Getting the locale from the config
-        String locale = plugin.getLocale();
+        String locale = plugin.getMainConfig().lang();
 
         // Defaulting to the en_US locale
         if (!new File(baseFolder, (locale + ".yml")).exists()) {
