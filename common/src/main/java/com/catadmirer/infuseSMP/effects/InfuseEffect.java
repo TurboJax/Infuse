@@ -16,7 +16,7 @@ public interface InfuseEffect {
 
     public void equip(Player owner);
     public void unequip(Player owner);
-    @Deprecated(since = "2.4.5") public void applyPassives(Player owner);
+    @Deprecated(since = "2.4.5") default void applyPassives(Player owner) {}
     public void activateSpark(Player owner);
 
     public InfuseEffect getRegularVersion();
