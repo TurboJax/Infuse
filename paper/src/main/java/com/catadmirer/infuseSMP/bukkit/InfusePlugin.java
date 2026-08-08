@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.bukkit;
 
 import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.MessageTranslator;
 import com.catadmirer.infuseSMP.Message.MessageType;
@@ -12,29 +13,24 @@ import com.catadmirer.infuseSMP.bukkit.managers.*;
 import com.catadmirer.infuseSMP.bukkit.placeholders.InfusePlaceholders;
 import com.catadmirer.infuseSMP.bukkit.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.bukkit.util.regions.DualRegionBlocker;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+
+import java.io.File;
 import java.util.List;
 import java.util.stream.Stream;
+
+import com.catadmirer.infuseSMP.util.RegionBlocker;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jspecify.annotations.NonNull;
 
-public class InfusePlugin extends JavaPlugin {
+public class InfusePlugin extends JavaPlugin implements Infuse {
+    private final MainConfig mainConfig;
+    private final RegionBlocker regionBlocker;
+
     private final DataManager dataManager;
     private final EffectManager effectManager;
-    private final MainConfig mainConfig;
     private final GlobalLoop loop;
     private final RecipeManager recipeManager;
     private final HitTracker hitTracker;
@@ -46,24 +42,29 @@ public class InfusePlugin extends JavaPlugin {
 
     public InfusePlugin() {
         this.mainConfig = new MainConfig(this);
+
+        if (canUseWG()) {
+            regionBlocker = new DualRegionBlocker();
+            Infuse.LOGGER.info("WorldGuard found!  Enabling region-based effect management.");
+        } else {
+            regionBlocker = new BasicRegionBlocker();
+            Infuse.LOGGER.info("WorldGuard is not installed! Using blacklisted-worlds configs");
+        }
+
         this.dataManager = new DataManager(this);
         this.effectManager = new EffectManager(this);
         this.loop = new GlobalLoop(this);
         this.recipeManager = new RecipeManager(this);
         this.hitTracker = new HitTracker(this);
+
+        InfuseProvider.setInstance(this);
     }
 
     public void onLoad() {
         // Registering the vanilla effects
         registerEffects();
 
-        if (RegionBlocker.canUseWG()) {
-            RegionBlocker.setInstance(new DualRegionBlocker());
-            Infuse.LOGGER.info("WorldGuard found!  Enabling region-based effect management.");
-        } else {
-            RegionBlocker.setInstance(new BasicRegionBlocker());
-            Infuse.LOGGER.info("WorldGuard is not installed! Using blacklisted-worlds configs");
-        }
+        regionBlocker.init();
     }
 
     public void onEnable() {
@@ -105,14 +106,6 @@ public class InfusePlugin extends JavaPlugin {
 
         // Logging the success message
         Infuse.LOGGER.info("Infuse Plugin has been enabled!");
-    }
-
-    public MainConfig getMainConfig() {
-        return mainConfig;
-    }
-
-    public RecipeManager getRecipeManager() {
-        return recipeManager;
     }
 
     /** Registers the commands for the plugin. */
@@ -248,48 +241,27 @@ public class InfusePlugin extends JavaPlugin {
         if (mainConfig.enableThief()) InfuseEffect.register(new Thief());
     }
 
+    @Override
+    public File getInfuseFolder() {
+        return getDataFolder();
+    }
+
+    @Override
+    public boolean canUseWG() {
+        return Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
+    }
+
+    @Override
     public String getVersion() {
         return getPluginMeta().getVersion();
     }
 
-    /** Checks the modrinth api for any updates to the plugin. */
-    private String getLatestVersion() {
-        HttpRequest request = HttpRequest.newBuilder()
-            .GET()
-            .header("User-Agent", "Infuse/" + getVersion())
-            .uri(URI.create("https://api.modrinth.com/v2/project/infusesmp/version"))
-            .build();
+    public MainConfig getMainConfig() {
+        return mainConfig;
+    }
 
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-
-            // Handling http error codes
-            if (response.statusCode() != 200) {
-                Infuse.LOGGER.warn("Recieved error code {} from api.modrinth.com", response.statusCode());
-                return null;
-            }
-
-            // Parsing json
-            Gson gson = new Gson();
-            JsonArray versions = gson.fromJson(response.body(), JsonArray.class);
-
-            // If no versions are returned, defaulting to the current version
-            if (versions.isEmpty()) {
-                Infuse.LOGGER.warn("No versions published to modrinth, defaulting to current version");
-                return getVersion();
-            }
-
-            JsonObject latestVersion = versions.get(0).getAsJsonObject();
-            return latestVersion.get("verson_number").getAsString();
-        } catch (JsonSyntaxException err) {
-            Infuse.LOGGER.error("Could not parse the json given by modrinth.", err);
-        } catch (InterruptedException err) {
-            Infuse.LOGGER.error("Version request was interrupted", err);
-        } catch (IOException err) {
-            Infuse.LOGGER.error("Could not get versions from modrinth", err);
-        }
-
-        return null;
+    public RegionBlocker getRegionBlocker() {
+        return regionBlocker;
     }
 
     public DataManager getDataManager() {
@@ -302,5 +274,9 @@ public class InfusePlugin extends JavaPlugin {
 
     public HitTracker getHitTracker() {
         return hitTracker;
+    }
+
+    public RecipeManager getRecipeManager() {
+        return recipeManager;
     }
 }
