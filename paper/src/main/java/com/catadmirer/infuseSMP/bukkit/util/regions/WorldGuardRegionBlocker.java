@@ -1,8 +1,15 @@
 package com.catadmirer.infuseSMP.bukkit.util.regions;
 
 import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperLocation;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperWorld;
 import com.catadmirer.infuseSMP.bukkit.util.EffectFlag;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.platform.Entity;
+import com.catadmirer.infuseSMP.platform.Location;
+import com.catadmirer.infuseSMP.platform.Player;
+import com.catadmirer.infuseSMP.util.RegionBlocker;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -14,16 +21,13 @@ import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class WorldGuardRegionBlocker extends RegionBlocker {
+public class WorldGuardRegionBlocker implements RegionBlocker {
     private static final SetFlag<InfuseEffect> BLOCKED_EFFECTS = new SetFlag<>("blocked-effects", new EffectFlag(null));
     private static final StateFlag USE_SPARKS = new StateFlag("use-sparks", true);
     private static final StateFlag SPARK_PASSTHROUGH = new StateFlag("spark-passthrough", true);
@@ -46,7 +50,7 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     @Override
     public boolean canUseSpark(Player player) {
-        return queryValue(player.getLocation(), USE_SPARKS, WorldGuardPlugin.inst().wrapPlayer(player)) == StateFlag.State.ALLOW;
+        return queryValue(player.getLocation(), USE_SPARKS, WorldGuardPlugin.inst().wrapPlayer(PaperPlayer.toBukkit(player))) == StateFlag.State.ALLOW;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     @Override
     public boolean canBeTargetedBySpark(Player player) {
-        return queryValue(player.getLocation(), SPARK_PASSTHROUGH, WorldGuardPlugin.inst().wrapPlayer(player)) == StateFlag.State.ALLOW;
+        return queryValue(player.getLocation(), SPARK_PASSTHROUGH, WorldGuardPlugin.inst().wrapPlayer(PaperPlayer.toBukkit(player))) == StateFlag.State.ALLOW;
     }
 
     @Override
@@ -66,7 +70,7 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     @Override
     public Set<InfuseEffect> getBlockedEffects(Player player) {
-        return getBlockedEffects(player.getLocation(), WorldGuardPlugin.inst().wrapPlayer(player));
+        return getBlockedEffects(player.getLocation(), WorldGuardPlugin.inst().wrapPlayer(PaperPlayer.toBukkit(player)));
     }
 
     @Override
@@ -87,7 +91,7 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     @Override
     public boolean isEffectBlocked(Player player, InfuseEffect effect) {
-        return isEffectBlocked(player.getLocation(), WorldGuardPlugin.inst().wrapPlayer(player), effect);
+        return isEffectBlocked(player.getLocation(), WorldGuardPlugin.inst().wrapPlayer(PaperPlayer.toBukkit(player)), effect);
     }
 
     @Override
@@ -97,17 +101,15 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     private boolean isEffectBlocked(Location loc, RegionAssociable assoc, InfuseEffect effect) {
         return getBlockedEffects(loc, assoc).stream()
-            .filter(e -> e.id() == effect.id())
-            .findAny()
-            .isPresent();
+            .anyMatch(e -> e.id() == effect.id());
     }
 
     @Nullable
     private <T> T queryValue(Location loc, Flag<T> flag, RegionAssociable assoc) {
         final RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        final RegionManager manager = container.get(BukkitAdapter.adapt(loc.getWorld()));
+        final RegionManager manager = container.get(BukkitAdapter.adapt(PaperWorld.toBukkit(loc.getWorld())));
         if (manager == null) return null;
 
-        return manager.getApplicableRegions(BukkitAdapter.asBlockVector(loc)).queryValue(assoc, flag);
+        return manager.getApplicableRegions(BukkitAdapter.asBlockVector(PaperLocation.toBukkit(loc))).queryValue(assoc, flag);
     }
 }

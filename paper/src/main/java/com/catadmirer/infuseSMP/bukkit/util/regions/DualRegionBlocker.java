@@ -2,13 +2,13 @@ package com.catadmirer.infuseSMP.bukkit.util.regions;
 
 import java.util.Set;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.platform.Entity;
+import com.catadmirer.infuseSMP.platform.Location;
+import com.catadmirer.infuseSMP.platform.Player;
+import com.catadmirer.infuseSMP.util.RegionBlocker;
 
-public class DualRegionBlocker extends RegionBlocker {
+public class DualRegionBlocker implements RegionBlocker {
     private final BasicRegionBlocker basic = new BasicRegionBlocker();
     private final WorldGuardRegionBlocker wg = new WorldGuardRegionBlocker();
 

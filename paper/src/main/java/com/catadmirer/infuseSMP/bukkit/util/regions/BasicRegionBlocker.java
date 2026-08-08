@@ -4,15 +4,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-
-import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
+import com.catadmirer.infuseSMP.EffectRegistry;
+import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.platform.Entity;
+import com.catadmirer.infuseSMP.platform.Location;
+import com.catadmirer.infuseSMP.platform.Player;
+import com.catadmirer.infuseSMP.util.RegionBlocker;
+import net.kyori.adventure.key.Key;
 
-public class BasicRegionBlocker extends RegionBlocker {
+public class BasicRegionBlocker implements RegionBlocker {
     @Override
     public void init() {}
     
@@ -34,7 +35,6 @@ public class BasicRegionBlocker extends RegionBlocker {
     @Override
     public Set<InfuseEffect> getBlockedEffects(Entity entity) {
         return getBlockedEffects(entity.getLocation());
-        
     }
 
     @Override
@@ -44,11 +44,11 @@ public class BasicRegionBlocker extends RegionBlocker {
 
     @Override
     public Set<InfuseEffect> getBlockedEffects(Location loc) {
-        return InfuseEffect.getRegisteredEffects()
+        return EffectRegistry.getRegisteredEffects()
             .values()
             .stream()
             .filter(e -> {
-                List<NamespacedKey> worlds = InfusePlugin.getInstance().getMainConfig().getBlacklistedWorlds(e);
+                List<Key> worlds = InfuseProvider.getInstance().getMainConfig().getBlacklistedWorlds(e);
 
                 return worlds.contains(loc.getWorld().key());
             })
@@ -67,9 +67,9 @@ public class BasicRegionBlocker extends RegionBlocker {
 
     @Override
     public boolean isEffectBlocked(Location loc, InfuseEffect effect) {
-        List<NamespacedKey> worlds = InfusePlugin.getInstance().getMainConfig().getBlacklistedWorlds(effect);
+        List<Key> worlds = InfuseProvider.getInstance().getMainConfig().getBlacklistedWorlds(effect);
 
-        return worlds.contains(loc.getWorld().getKey());
+        return worlds.contains(loc.getWorld().key());
     }
     
 }
