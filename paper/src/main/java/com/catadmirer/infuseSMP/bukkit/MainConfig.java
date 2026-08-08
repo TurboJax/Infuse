@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class MainConfig {
+public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     public final File file;
     public final FileConfiguration config;
     public final InfusePlugin plugin;
@@ -76,6 +76,7 @@ public class MainConfig {
         return false;
     }
 
+    @Override
     public List<NamespacedKey> getBlacklistedWorlds(InfuseEffect effect) {
         return config.getStringList(effect.plainKey() + ".blacklisted-worlds")
             .stream()
@@ -84,66 +85,82 @@ public class MainConfig {
             .toList();
     }
 
+    @Override
     public String lang() {
         return config.getString("lang", "en_US");
     }
 
+    @Override
     public boolean allowInfiniteEffects() {
         return config.getBoolean("allow_infinite_effects");
     }
 
+    @Override
     public int ritualDuration() {
         return config.getInt("ritual_duration");
     }
 
+    @Override
     public int ritualDurationEnder() {
         return config.getInt("ritual_duration_ender");
     }
 
+    @Override
     public boolean ritualBeacon() {
         return config.getBoolean("ritual_beacon");
     }
 
+    @Override
     public boolean emptyEffectIcon() {
         return config.getBoolean("empty_effect_icon");
     }
 
+    @Override
     public boolean playerHeadDrops() {
         return config.getBoolean("player_head_drops");
     }
 
+    @Override
     public boolean enableDiscordBroadcasts() {
         return config.getBoolean("enable_discord_broadcasts");
     }
 
+    @Override
     public String discordWebhookUrl() {
         return config.getString("discord_webhook_url");
     }
 
+    @Override
     public boolean brewingGui() {
         return config.getBoolean("brewing_gui");
     }
 
+    @Override
     public String effectDrops() {
         return config.getString("effect_drops");
     }
 
+    @Override
     public boolean joinEffectsEnabled() {
         return config.getBoolean("join_effects_enabled");
     }
 
+    @Override
     public List<InfuseEffect> joinEffects() {
         return config.getStringList("join_effects").stream().map(InfuseEffect::fromString).filter(Objects::nonNull).toList();
     }
 
+    @Override
     public boolean enableApophis() {
         return config.getBoolean("extra_effects.Apophis");
     }
 
+    @Override
     public boolean regularBroadcast() {
         return config.getBoolean("regular_effect_broadcast");
     }
 
+    @Override
     public boolean enableThief() {
         return config.getBoolean("extra_effects.Thief");
     }
@@ -155,6 +172,7 @@ public class MainConfig {
      *
      * @return The number of effects that can be crafted of the specified {@link InfuseEffect}.
      */
+    @Override
     public int getCraftLimit(InfuseEffect effect) {
         List<Integer> craftLimits = config.getIntegerList("craft_limits." + effect.plainKey());
 
@@ -168,189 +186,237 @@ public class MainConfig {
         return craftLimits.get(effect.augmented() ? 0 : 1);
     }
 
+    @Override
     public double emeraldLockDurationSeconds() {
         return config.getDouble("emerald.lock_duration_seconds", 10);
     }
 
+    @Override
     public boolean invisHideKills() {
         return config.getBoolean("invis.hide_kills");
     }
 
+    @Override
     public boolean invisHideDeaths() {
         return config.getBoolean("invis.hide_deaths");
     }
 
+    @Override
     public long cooldown(InfuseEffect effect) {
         return config.getLong(effect.plainKey() + ".cooldown." + (effect.augmented() ? "augmented" : "default"));
     }
 
+    @Override
     public long duration(InfuseEffect effect) {
         return config.getLong(effect.plainKey() + ".duration." + (effect.augmented() ? "augmented" : "default"));
     }
 
+    @Override
     public int speedDashMultiplier() {
         return config.getInt("speed.dashMultiplier");
     }
 
+    @Override
     public int speedPlayerVelocityMultiplier() {
         return config.getInt("speed.playerVelocityMultiplier");
     }
 
+    @Override
     public int oceanPullInterval() {
         return config.getInt("ocean_pulling.pull.interval");
     }
 
+    @Override
     public int oceanPullRadius() {
         return config.getInt("ocean_pulling.pull.radius");
     }
 
+    @Override
     public double oceanPullStrength() {
         return config.getDouble("ocean_pulling.pull.strength");
     }
 
+    @Override
     public int hitCounterDecaySeconds() {
         return config.getInt("hit_counter_decay_seconds");
     }
 
+    @Override
     public int emeraldExpPerHit() {
         return config.getInt("emerald.xp_stolen_per_hit");
     }
 
+    @Override
     public float emeraldExpPercent() {
         return Math.clamp((float) config.getDouble("emerald.xp_stolen_percent"), 0, 1);
     }
 
+    @Override
     public float emeraldPercentExpToShare() {
         return Math.clamp((float) config.getDouble("emerald.percent_xp_to_share"), 0, 1);
     }
 
+    @Override
     public int apophisExpPerHit() {
         return config.getInt("apophis.xp_stolen_per_hit");
     }
 
+    @Override
     public float apophisExpPercent() {
         return Math.clamp((float) config.getDouble("apophis.xp_stolen_percent"), 0, 1);
     }
 
+    @Override
     public float apophisPercentExpToShare() {
         return Math.clamp((float) config.getDouble("apophis.percent_xp_to_share"), 0, 1);
     }
 
+    @Override
     public double apophisLockDurationSeconds() {
         return config.getDouble("apophis.lock_duration_seconds", 10);
     }
 
+    @Override
     public int apophisLootingLevel() {
         return config.getInt("apophis.enchantment.looting_level");
     }
 
+    @Override
     public double apophisSparkRadius() {
         return config.getDouble("apophis.spark.radius", 5);
     }
 
+    @Override
     public double apophisSparkExplosionRadius() {
         return config.getDouble("apophis.spark.explosion-radius", 5);
     }
 
+    @Override
     public double apophisLavaWalkSpeed() {
         return config.getDouble("apophis.passive.walk-speed", 0.6);
     }
 
+    @Override
     public int apophisXpMultiplierStandard() {
         return config.getInt("apophis.multiplier-xp.standard", 2);
     }
+
+    @Override
     public int apophisXpMultiplierSpark() {
         return config.getInt("apophis.multiplier-xp.use-effect", 4);
     }
 
+    @Override
     public int emeraldLootingLevel() {
         return config.getInt("emerald.enchantment.looting_level");
     }
 
+    @Override
     public int hasteFortuneLevel() {
         return config.getInt("haste.enchantment.fortune_level");
     }
 
+    @Override
     public int hasteEfficiencyLevel() {
         return config.getInt("haste.enchantment.efficiency_level");
     }
 
+    @Override
     public int hasteUnbreakingLevel() {
         return config.getInt("haste.enchantment.unbreaking_level");
     }
 
+    @Override
     public double emeraldMultiplierStandard() {
         return config.getDouble("emerald.multiplier-xp.standard");
     }
 
+    @Override
     public double emeraldMultiplierUseEffect() {
         return config.getDouble("emerald.multiplier-xp.use-effect");
     }
 
+    @Override
     public double enderPassiveRadius() {
         return config.getDouble("ender.passive.radius");
     }
 
+    @Override
     public int enderSparkMaxDistance() {
         return config.getInt("ender.spark.max-distance");
     }
 
+    @Override
     public double featherLandRadius() {
         return config.getDouble("feather.land.radius");
     }
 
+    @Override
     public double featherLandDamage() {
         return config.getDouble("feather.land.damage");
     }
 
+    @Override
     public double firePassiveWalkSpeed() {
         return config.getDouble("fire.passive.walk-speed");
     }
 
+    @Override
     public double fireSparkRadius() {
         return config.getDouble("fire.spark.radius");
     }
 
+    @Override
     public double fireSparkExplosionRadius() {
         return config.getDouble("fire.spark.explosion-radius");
     }
 
+    @Override
     public int frostPassiveSnowChangingRadius() {
         return config.getInt("frost.passive.snow-changing-radius");
     }
 
+    @Override
     public double frostPassiveWalkSpeed() {
         return config.getDouble("frost.passive.walk-speed");
     }
 
+    @Override
     public double frostSparkRadius() {
         return config.getDouble("frost.spark.radius");
     }
 
+    @Override
     public int oceanPassiveDrownStrength() {
         return config.getInt("ocean.passive.drown-strength");
     }
 
+    @Override
     public int oceanPassiveDrownDamage() {
         return config.getInt("ocean.passive.drown-damage");
     }
 
+    @Override
     public int oceanSparkDrownStrength() {
         return config.getInt("ocean.spark.drown-strength");
     }
 
+    @Override
     public int oceanSparkDrownDamage() {
         return config.getInt("ocean.spark.drown-damage");
     }
 
+    @Override
     public double regenSparkHealTrustedRadius() {
         return config.getDouble("regen.spark.heal-trusted-radius");
     }
 
+    @Override
     public double thunderSparkBaseRadius() {
         return config.getDouble("thunder.spark.base-radius");
     }
 
+    @Override
     public double thunderSparkPerPlayerBoostRadius() {
         return config.getDouble("thunder.spark.per-player-boost-radius");
     }

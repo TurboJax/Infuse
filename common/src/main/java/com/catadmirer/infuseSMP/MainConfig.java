@@ -6,6 +6,12 @@ import net.kyori.adventure.key.Key;
 import java.util.List;
 
 public interface MainConfig {
+    void load();
+
+    void save();
+
+    void applyUpdates();
+
     List<Key> getBlacklistedWorlds(InfuseEffect effect);
 
     String lang();
