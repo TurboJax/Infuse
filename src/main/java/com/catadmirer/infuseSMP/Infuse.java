@@ -6,7 +6,6 @@ import com.catadmirer.infuseSMP.extraeffects.*;
 import com.catadmirer.infuseSMP.listeners.*;
 import com.catadmirer.infuseSMP.managers.*;
 import com.catadmirer.infuseSMP.placeholders.InfusePlaceholders;
-import com.catadmirer.infuseSMP.util.GUI;
 import com.catadmirer.infuseSMP.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.DualRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
@@ -156,7 +155,6 @@ public class Infuse extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(hitTracker, this);
 
         // Registering events for all the listeners
-        Bukkit.getPluginManager().registerEvents(new GUI(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(dataManager), this);
         Bukkit.getPluginManager().registerEvents(new CrafterCraftListener(), this);
         Bukkit.getPluginManager().registerEvents(new EntityDeathListener(dataManager), this);
