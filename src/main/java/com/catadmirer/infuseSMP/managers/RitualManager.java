@@ -1,6 +1,6 @@
 package com.catadmirer.infuseSMP.managers;
 
-import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.effects.Ender;
@@ -219,7 +219,7 @@ public class RitualManager {
         location.getWorld().dropItem(location.add(0, 1, 0), effect.createItem());
 
         // Updating the ender effect recipe
-        if (effect.getId() == EffectIds.ENDER) plugin.getRecipeManager().updateEnderRecipe();
+        if (effect.getId() == EffectConstants.Id.ENDER.value()) plugin.getRecipeManager().updateEnderRecipe();
 
         // Finalizing the ritual ending
         stopRitual();

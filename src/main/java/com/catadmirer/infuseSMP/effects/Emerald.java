@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
@@ -60,7 +59,7 @@ public class Emerald extends InfuseEffect {
     }
 
     public Emerald(boolean augmented) {
-        super("emerald", EffectIds.EMERALD, augmented, EffectConstants.potionColor(EffectIds.EMERALD), EffectConstants.ritualColor(EffectIds.EMERALD));
+        super("emerald", EffectConstants.Id.EMERALD, augmented, EffectConstants.PotionColor.EMERALD, EffectConstants.RitualColor.EMERALD, EffectConstants.BackgroundColor.EMERALD);
     }
 
     @Override

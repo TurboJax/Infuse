@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.EffectUnequipEvent;
@@ -36,7 +35,7 @@ public class Haste extends InfuseEffect {
     }
 
     public Haste(boolean augmented) {
-        super("haste", EffectIds.HASTE, augmented, EffectConstants.potionColor(EffectIds.HASTE), EffectConstants.ritualColor(EffectIds.HASTE));
+        super("haste", EffectConstants.Id.HASTE, augmented, EffectConstants.PotionColor.HASTE, EffectConstants.RitualColor.HASTE, EffectConstants.BackgroundColor.HASTE);
     }
 
     @Override

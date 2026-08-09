@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.EffectEquipEvent;
@@ -44,7 +43,7 @@ public class Frost extends InfuseEffect {
     }
 
     public Frost(boolean augmented) {
-        super("frost", EffectIds.FROST, augmented, EffectConstants.potionColor(EffectIds.FROST), EffectConstants.ritualColor(EffectIds.FROST));
+        super("frost", EffectConstants.Id.FROST, augmented, EffectConstants.PotionColor.FROST, EffectConstants.RitualColor.FROST, EffectConstants.BackgroundColor.FROST);
     }
 
     @Override

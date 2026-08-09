@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -27,7 +26,7 @@ public class Strength extends InfuseEffect {
     }
 
     public Strength(boolean augmented) {
-        super("strength", EffectIds.STRENGTH, augmented, EffectConstants.potionColor(EffectIds.STRENGTH), EffectConstants.ritualColor(EffectIds.STRENGTH));
+        super("strength", EffectConstants.Id.STRENGTH, augmented, EffectConstants.PotionColor.STRENGTH, EffectConstants.RitualColor.STRENGTH, EffectConstants.BackgroundColor.STRENGTH);
     }
 
     @Override

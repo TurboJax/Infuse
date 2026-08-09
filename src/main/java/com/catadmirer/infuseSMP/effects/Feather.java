@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -39,7 +38,7 @@ public class Feather extends InfuseEffect {
     }
 
     public Feather(boolean augmented) {
-        super("feather", EffectIds.FEATHER, augmented, EffectConstants.potionColor(EffectIds.FEATHER), EffectConstants.ritualColor(EffectIds.FEATHER));
+        super("feather", EffectConstants.Id.FEATHER, augmented, EffectConstants.PotionColor.FEATHER, EffectConstants.RitualColor.FEATHER, EffectConstants.BackgroundColor.FEATHER);
     }
 
     @Override

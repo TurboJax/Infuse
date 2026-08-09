@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.extraeffects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.effects.Emerald.FoodAndExpLock;
@@ -91,7 +90,7 @@ public class Apophis extends InfuseEffect {
     }
 
     public Apophis(boolean augmented) {
-        super("apophis", EffectIds.APOPHIS, augmented, EffectConstants.potionColor(EffectIds.APOPHIS), EffectConstants.ritualColor(EffectIds.APOPHIS));
+        super("apophis", EffectConstants.Id.APOPHIS, augmented, EffectConstants.PotionColor.APOPHIS, EffectConstants.RitualColor.APOPHIS, EffectConstants.BackgroundColor.APOPHIS);
     }
 
     @Override

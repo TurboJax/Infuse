@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -29,7 +28,7 @@ public class Regen extends InfuseEffect {
     }
 
     public Regen(boolean augmented) {
-        super("regen", EffectIds.REGEN, augmented, EffectConstants.potionColor(EffectIds.REGEN), EffectConstants.ritualColor(EffectIds.REGEN));
+        super("regen", EffectConstants.Id.REGEN, augmented, EffectConstants.PotionColor.REGEN, EffectConstants.RitualColor.REGEN, EffectConstants.BackgroundColor.REGEN);
     }
 
     @Override

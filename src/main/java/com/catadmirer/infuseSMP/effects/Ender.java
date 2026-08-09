@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
@@ -43,7 +42,7 @@ public class Ender extends InfuseEffect {
     }
 
     public Ender(boolean augmented) {
-        super("ender", EffectIds.ENDER, augmented, EffectConstants.potionColor(EffectIds.ENDER), EffectConstants.ritualColor(EffectIds.ENDER));
+        super("ender", EffectConstants.Id.ENDER, augmented, EffectConstants.PotionColor.ENDER, EffectConstants.RitualColor.ENDER, EffectConstants.BackgroundColor.ENDER);
     }
 
     public void equip(Player owner) {

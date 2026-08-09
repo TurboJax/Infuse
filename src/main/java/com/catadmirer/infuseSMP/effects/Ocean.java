@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
@@ -24,7 +23,7 @@ public class Ocean extends InfuseEffect {
     }
 
     public Ocean(boolean augmented) {
-        super("ocean", EffectIds.OCEAN, augmented, EffectConstants.potionColor(EffectIds.OCEAN), EffectConstants.ritualColor(EffectIds.OCEAN));
+        super("ocean", EffectConstants.Id.OCEAN, augmented, EffectConstants.PotionColor.OCEAN, EffectConstants.RitualColor.OCEAN, EffectConstants.BackgroundColor.OCEAN);
     }
 
     @Override

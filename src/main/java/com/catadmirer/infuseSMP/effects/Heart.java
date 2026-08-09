@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -38,7 +37,7 @@ public class Heart extends InfuseEffect {
     }
 
     public Heart(boolean augmented) {
-        super("heart", EffectIds.HEART, augmented, EffectConstants.potionColor(EffectIds.HEART), EffectConstants.ritualColor(EffectIds.HEART));
+        super("heart", EffectConstants.Id.HEART, augmented, EffectConstants.PotionColor.HEART, EffectConstants.RitualColor.HEART, EffectConstants.BackgroundColor.HEART);
     }
 
     @Override

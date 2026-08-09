@@ -1,92 +1,113 @@
 package com.catadmirer.infuseSMP;
 
-import com.catadmirer.infuseSMP.inventories.AugOrRegChooser;
 import java.awt.Color;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Material;
 
 public class EffectConstants {
-    /**
-     * Gets the {@link Material} to use in the background of this effect's {@link AugOrRegChooser} menu.
-     *
-     * @param effectId The id of the infuse effect.
-     *
-     * @return the {@link Material} for the effect.
-     */
-    public static Material menuBackgroundColor(int effectId) {
-        return switch (effectId) {
-            case EffectIds.EMERALD -> Material.LIME_STAINED_GLASS_PANE;
-            case EffectIds.ENDER -> Material.PURPLE_STAINED_GLASS_PANE;
-            case EffectIds.FEATHER -> Material.WHITE_STAINED_GLASS_PANE;
-            case EffectIds.FIRE -> Material.ORANGE_STAINED_GLASS_PANE;
-            case EffectIds.FROST -> Material.LIGHT_BLUE_STAINED_GLASS_PANE;
-            case EffectIds.HASTE -> Material.ORANGE_STAINED_GLASS_PANE;
-            case EffectIds.HEART -> Material.RED_STAINED_GLASS_PANE;
-            case EffectIds.INVIS -> Material.LIGHT_GRAY_STAINED_GLASS_PANE;
-            case EffectIds.OCEAN -> Material.BLUE_STAINED_GLASS_PANE;
-            case EffectIds.REGEN -> Material.RED_STAINED_GLASS_PANE;
-            case EffectIds.SPEED -> Material.LIGHT_BLUE_STAINED_GLASS_PANE;
-            case EffectIds.STRENGTH -> Material.RED_STAINED_GLASS_PANE;
-            case EffectIds.THUNDER -> Material.YELLOW_STAINED_GLASS_PANE;
-            case EffectIds.APOPHIS -> Material.MAGENTA_STAINED_GLASS_PANE;
-            case EffectIds.THIEF -> Material.RED_STAINED_GLASS_PANE;
-            default -> null;
-        };
+    public enum Id {
+        EMERALD,
+        ENDER,
+        FEATHER,
+        FIRE,
+        FROST,
+        HASTE,
+        HEART,
+        INVIS,
+        OCEAN,
+        REGEN,
+        SPEED,
+        STRENGTH,
+        THUNDER,
+        APOPHIS,
+        THIEF;
+
+        public int value() {
+            return ordinal();
+        }
     }
 
-    /**
-     * Gets the {@link Color} for this effect's potion and related text.
-     *
-     * @param effectId The id of the infuse effect.
-     *
-     * @return the {@link Color} for the effect.
-     */
-    public static Color potionColor(int effectId) {
-        return switch (effectId) {
-            case EffectIds.EMERALD -> Color.GREEN;
-            case EffectIds.ENDER -> new Color(0x800080);
-            case EffectIds.FEATHER -> new Color(0xBEA3CA);
-            case EffectIds.FIRE -> new Color(0xEE5522);
-            case EffectIds.FROST -> new Color(0x55FFFF);
-            case EffectIds.HASTE -> new Color(0xFFCC33);
-            case EffectIds.HEART -> Color.RED;
-            case EffectIds.INVIS -> new Color(0xAA00AA);
-            case EffectIds.OCEAN -> new Color(0x0066FF);
-            case EffectIds.REGEN -> new Color(0xFF5555);
-            case EffectIds.SPEED -> new Color(0xEEBB77);
-            case EffectIds.STRENGTH -> new Color(0x800000);
-            case EffectIds.THUNDER -> Color.YELLOW;
-            case EffectIds.APOPHIS -> new Color(0x440044);
-            case EffectIds.THIEF -> new Color(0xAA0000);
-            default -> null;
-        };
+    public enum BackgroundColor {
+        EMERALD(Material.LIME_STAINED_GLASS_PANE),
+        ENDER(Material.PURPLE_STAINED_GLASS_PANE),
+        FEATHER(Material.WHITE_STAINED_GLASS_PANE),
+        FIRE(Material.ORANGE_STAINED_GLASS_PANE),
+        FROST(Material.LIGHT_BLUE_STAINED_GLASS_PANE),
+        HASTE(Material.ORANGE_STAINED_GLASS_PANE),
+        HEART(Material.RED_STAINED_GLASS_PANE),
+        INVIS(Material.LIGHT_GRAY_STAINED_GLASS_PANE),
+        OCEAN(Material.BLUE_STAINED_GLASS_PANE),
+        REGEN(Material.RED_STAINED_GLASS_PANE),
+        SPEED(Material.LIGHT_BLUE_STAINED_GLASS_PANE),
+        STRENGTH(Material.RED_STAINED_GLASS_PANE),
+        THUNDER(Material.YELLOW_STAINED_GLASS_PANE),
+        APOPHIS(Material.MAGENTA_STAINED_GLASS_PANE),
+        THIEF(Material.RED_STAINED_GLASS_PANE);
+
+        private final Material material;
+
+        BackgroundColor(Material material) {
+            this.material = material;
+        }
+
+        public Material value() {
+            return material;
+        }
     }
 
-    /**
-     * Gets the {@link BossBar.Color} for this effect's ritual.
-     *
-     * @param effectId The id of the infuse effect.
-     *
-     * @return the {@link BossBar.Color} for the effect.
-     */
-    public static BossBar.Color ritualColor(int effectId) {
-        return switch (effectId) {
-            case EffectIds.EMERALD -> BossBar.Color.GREEN;
-            case EffectIds.ENDER -> BossBar.Color.PURPLE;
-            case EffectIds.FEATHER -> BossBar.Color.WHITE;
-            case EffectIds.FIRE -> BossBar.Color.RED;
-            case EffectIds.FROST -> BossBar.Color.BLUE;
-            case EffectIds.HASTE -> BossBar.Color.YELLOW;
-            case EffectIds.HEART -> BossBar.Color.RED;
-            case EffectIds.INVIS -> BossBar.Color.PURPLE;
-            case EffectIds.OCEAN -> BossBar.Color.BLUE;
-            case EffectIds.REGEN -> BossBar.Color.PINK;
-            case EffectIds.SPEED -> BossBar.Color.YELLOW;
-            case EffectIds.STRENGTH -> BossBar.Color.RED;
-            case EffectIds.THUNDER -> BossBar.Color.RED;
-            case EffectIds.APOPHIS -> BossBar.Color.PURPLE;
-            case EffectIds.THIEF -> BossBar.Color.YELLOW;
-            default -> null;
-        };
+    public enum PotionColor {
+        EMERALD(Color.GREEN),
+        ENDER(new Color(0x800080)),
+        FEATHER(new Color(0xBEA3CA)),
+        FIRE(new Color(0xEE5522)),
+        FROST(new Color(0x55FFFF)),
+        HASTE(new Color(0xFFCC33)),
+        HEART(Color.RED),
+        INVIS(new Color(0xAA00AA)),
+        OCEAN(new Color(0x0066FF)),
+        REGEN(new Color(0xFF5555)),
+        SPEED(new Color(0xEEBB77)),
+        STRENGTH(new Color(0x800000)),
+        THUNDER(Color.YELLOW),
+        APOPHIS(new Color(0x440044)),
+        THIEF(new Color(0xAA0000));
+
+        private final Color color;
+
+        PotionColor(Color color) {
+            this.color = color;
+        }
+
+        public Color value() {
+            return color;
+        }
+    }
+
+    public enum RitualColor {
+        EMERALD(BossBar.Color.GREEN),
+        ENDER(BossBar.Color.PURPLE),
+        FEATHER(BossBar.Color.WHITE),
+        FIRE(BossBar.Color.RED),
+        FROST(BossBar.Color.BLUE),
+        HASTE(BossBar.Color.YELLOW),
+        HEART(BossBar.Color.RED),
+        INVIS(BossBar.Color.PURPLE),
+        OCEAN(BossBar.Color.BLUE),
+        REGEN(BossBar.Color.PINK),
+        SPEED(BossBar.Color.YELLOW),
+        STRENGTH(BossBar.Color.RED),
+        THUNDER(BossBar.Color.RED),
+        APOPHIS(BossBar.Color.PURPLE),
+        THIEF(BossBar.Color.YELLOW);
+
+        private final BossBar.Color color;
+
+        RitualColor(BossBar.Color color) {
+            this.color = color;
+        }
+
+        public BossBar.Color value() {
+            return color;
+        }
     }
 }

@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
@@ -38,7 +37,7 @@ public class Invis extends InfuseEffect {
     }
 
     public Invis(boolean augmented) {
-        super("invis", EffectIds.INVIS, augmented, EffectConstants.potionColor(EffectIds.INVIS), EffectConstants.ritualColor(EffectIds.INVIS));
+        super("invis", EffectConstants.Id.INVIS, augmented, EffectConstants.PotionColor.INVIS, EffectConstants.RitualColor.INVIS, EffectConstants.BackgroundColor.INVIS);
     }
 
     @Override

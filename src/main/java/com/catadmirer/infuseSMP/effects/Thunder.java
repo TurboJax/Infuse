@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
@@ -34,7 +33,7 @@ public class Thunder extends InfuseEffect {
     }
 
     public Thunder(boolean augmented) {
-        super("thunder", EffectIds.THUNDER, augmented, EffectConstants.potionColor(EffectIds.THUNDER), EffectConstants.ritualColor(EffectIds.THUNDER));
+        super("thunder", EffectConstants.Id.THUNDER, augmented, EffectConstants.PotionColor.THUNDER, EffectConstants.RitualColor.THUNDER, EffectConstants.BackgroundColor.THUNDER);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.extraeffects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
@@ -35,7 +34,7 @@ public class Thief extends InfuseEffect {
     }
 
     public Thief(boolean augmented) {
-        super("thief", EffectIds.THIEF, augmented, EffectConstants.potionColor(EffectIds.THIEF), EffectConstants.ritualColor(EffectIds.THIEF));
+        super("thief", EffectConstants.Id.THIEF, augmented, EffectConstants.PotionColor.THIEF, EffectConstants.RitualColor.THIEF, EffectConstants.BackgroundColor.THIEF);
     }
 
     @Override

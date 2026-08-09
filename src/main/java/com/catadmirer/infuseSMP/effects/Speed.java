@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
@@ -35,7 +34,7 @@ public class Speed extends InfuseEffect {
     }
 
     public Speed(boolean augmented) {
-        super("speed", EffectIds.SPEED, augmented, EffectConstants.potionColor(EffectIds.SPEED), EffectConstants.ritualColor(EffectIds.SPEED));
+        super("speed", EffectConstants.Id.SPEED, augmented, EffectConstants.PotionColor.SPEED, EffectConstants.RitualColor.SPEED, EffectConstants.BackgroundColor.SPEED);
     }
 
     @Override
