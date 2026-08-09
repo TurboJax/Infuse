@@ -4,7 +4,6 @@ import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import com.catadmirer.infuseSMP.managers.EffectCraftManager;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 
 import org.bukkit.entity.Player;
@@ -65,8 +64,9 @@ public class PlayerJoinListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (!EffectCraftManager.isRitual()) return;
+        if (!plugin.getRitualManager().isActive()) return;
 
-        event.getPlayer().showBossBar(EffectCraftManager.getBar());
+        //noinspection DataFlowIssue
+        event.getPlayer().showBossBar(plugin.getRitualManager().getBossBar());
     }
 }
