@@ -29,7 +29,7 @@ public class InfusePlaceholders extends PlaceholderExpansion {
 
     @Override
     public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
+        return plugin.getVersion();
     }
 
     @Override

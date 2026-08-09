@@ -129,6 +129,7 @@ public abstract class InfuseEffect implements Listener {
     public abstract void equip(Player owner);
     public abstract void unequip(Player owner);
 
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated()
     public void applyPassives(Player owner) {}
     public abstract void activateSpark(Player owner);
@@ -202,17 +203,14 @@ public abstract class InfuseEffect implements Listener {
 
         // Getting an instance of the plugin to read configs
         Infuse plugin = Infuse.getInstance();
-        if (plugin == null) return null;
 
         int augLeft = plugin.getMainConfig().getCraftLimit(getAugmentedVersion()) - plugin.getDataManager().getExistingCount(getAugmentedVersion());
         int regLeft = plugin.getMainConfig().getCraftLimit(getRegularVersion()) - plugin.getDataManager().getExistingCount(getRegularVersion());
 
-        potionItem.editMeta(meta -> {
-            List<Component> lore = new ArrayList<>();
-            lore.add(Message.toComponent("<gray>Augmented Limit: <aqua>" + augLeft));
-            lore.add(Message.toComponent("<gray>Regular Limit: <aqua>" + regLeft));
-            meta.lore(lore);
-        });
+        List<Component> lore = new ArrayList<>();
+        lore.add(Message.toComponent("<gray>Augmented Limit: <aqua>" + augLeft));
+        lore.add(Message.toComponent("<gray>Regular Limit: <aqua>" + regLeft));
+        potionItem.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
 
         return potionItem;
     }
@@ -231,7 +229,7 @@ public abstract class InfuseEffect implements Listener {
         return key.equals(item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING));
     }
 
-    public static InfuseEffect fromItem(ItemStack item) {
+    public static InfuseEffect fromItem(@Nullable ItemStack item) {
         if (item == null) return null;
         if (item.getType() != Material.POTION) return null;
 

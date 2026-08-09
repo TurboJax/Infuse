@@ -8,6 +8,7 @@ import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.FoodProperties;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -17,7 +18,6 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.components.FoodComponent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -111,31 +111,32 @@ public class Regen extends InfuseEffect {
         player.setSaturation(sat + 6);
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @EventHandler
     public void regenCanAlwaysEat(PlayerInteractEvent event) {
         if (!(event.getAction().isRightClick())) return;
         Player player = event.getPlayer();
+        ItemStack item = event.getItem();
 
         // Filtering an empty hand
-        if (event.getItem() == null) return;
+        if (item == null) return;
 
         // Filtering inedible items
-        if (!event.getItem().getType().isEdible()) return;
+        if (!item.getType().isEdible()) return;
 
-        // Filtering always edible items
-        if (new ItemStack(event.getItem().getType()).getData(DataComponentTypes.FOOD).canAlwaysEat()) return;
+        // Filtering normally always edible items
+        if (item.getType().getDefaultData(DataComponentTypes.FOOD).canAlwaysEat()) return;
 
         // Making the food always edible only if the player has the regen effect.  Makes food not always edible otherwise
         if (plugin.getDataManager().hasEffect(player, this) && !RegionBlocker.getInstance().isEffectBlocked(player, this)) {
-            event.getItem().editMeta(meta -> {
-                FoodComponent foodComp = meta.getFood();
-                foodComp.setCanAlwaysEat(true);
-                meta.setFood(foodComp);
-            });
+            FoodProperties properties = item.getData(DataComponentTypes.FOOD);
+
+            // Ignoring null error because we know the item is edible.
+            //noinspection DataFlowIssue
+            properties = properties.toBuilder().canAlwaysEat(true).build();
+            item.setData(DataComponentTypes.FOOD, properties);
         } else {
-            event.getItem().editMeta(meta -> {
-                meta.setFood(null);
-            });
+            item.resetData(DataComponentTypes.FOOD);
         }
     }
 
