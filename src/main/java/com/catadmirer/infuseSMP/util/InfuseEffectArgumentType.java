@@ -15,7 +15,9 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class InfuseEffectArgumentType implements CustomArgumentType<InfuseEffect,String> {
     private static final DynamicCommandExceptionType ERROR_NO_EFFECT_FOUND = new DynamicCommandExceptionType(s -> new LiteralMessage("\"" + s + "\" is not a registered effect key."));
 

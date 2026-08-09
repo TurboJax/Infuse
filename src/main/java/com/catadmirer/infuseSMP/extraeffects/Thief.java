@@ -214,7 +214,7 @@ public class Thief extends InfuseEffect {
 
     /**
      * Removes a disguised player's disguise.
-     * 
+     * <p>
      * Unaffected by WorldGuard
      * 
      * @param event A {@link PlayerDeathEvent}

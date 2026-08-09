@@ -15,7 +15,9 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class SelectStringArgumentType implements CustomArgumentType<String,String> {
     private static final Dynamic2CommandExceptionType ERROR_INVALID_STRING = new Dynamic2CommandExceptionType((arg,allowed) -> new LiteralMessage("\"" + arg + "\" is not a valid argument here. Use one of: " + allowed));
     

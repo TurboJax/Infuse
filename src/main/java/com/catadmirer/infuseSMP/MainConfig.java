@@ -24,13 +24,14 @@ public class MainConfig {
     /**
      * Reloads the configuration.
      *
-     * @return Whether the configuration was loaded successfully.
+     * @return Whether the configuration was loaded successfully or not.
      */
     public boolean load() {
         // Creating the file if it doesn't exist.
         if (!file.exists()) {
             file.getParentFile().mkdirs();
-            plugin.saveResource(file.getName(), true);
+            plugin.saveResource(file.getName(), true);            e.printStackTrace();
+
         }
 
         // Loading the config
@@ -41,8 +42,7 @@ public class MainConfig {
         } catch (InvalidConfigurationException e) {
             Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", file.getName());
         } catch (IOException e) {
-            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", file.getName());
-            e.printStackTrace();
+            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", file.getName(), e);
         }
 
         return false;
@@ -51,7 +51,7 @@ public class MainConfig {
     /**
      * Writes the config to the file.
      *
-     * @return Whether or not the config was successfully written.
+     * @return Whether the config was successfully written or not.
      */
     public boolean save() {
         // Creating the file if it doesn't exist.

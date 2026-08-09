@@ -35,26 +35,26 @@ public class InfuseCommand {
 
         return Commands.literal("infuse")
             .then(Commands.literal("gui")
-                .requires(c -> c.getExecutor().hasPermission("infuse.gui") && (c.getExecutor() instanceof Player))
+                .requires(c -> c.getSender().hasPermission("infuse.gui") && (c.getSender() instanceof Player))
                 .executes(cmd::gui)
             )
             .then(Commands.literal("reload")
-                .requires(c -> c.getExecutor().hasPermission("infuse.reload") )
+                .requires(c -> c.getSender().hasPermission("infuse.reload") )
                 .executes(cmd::reload)
             )
             .then(Commands.literal("reroll")
-                .requires(c -> c.getExecutor().hasPermission("infuse.reroll"))
+                .requires(c -> c.getSender().hasPermission("infuse.reroll"))
                 .executes(c -> cmd.reroll(c, null))
                 .then(Commands.argument("target", ArgumentTypes.players())
                     .executes(c -> cmd.reroll(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
                 )
             )
             .then(Commands.literal("recipes")
-                .requires(c -> c.getExecutor().hasPermission("infuse.recipes"))
+                .requires(c -> c.getSender().hasPermission("infuse.recipes"))
                 .executes(InfuseCommand::recipes)
             )
             .then(Commands.literal("giveeffect")
-                .requires(c -> c.getExecutor().hasPermission("infuse.giveeffect"))
+                .requires(c -> c.getSender().hasPermission("infuse.giveeffect"))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .then(Commands.argument("effect", CustomArgumentTypes.INFUSE_EFFECT)
                         .executes(c -> cmd.giveEffect(c, c.getArgument("target", PlayerSelectorArgumentResolver.class), c.getArgument("effect", InfuseEffect.class)))
@@ -62,7 +62,7 @@ public class InfuseCommand {
                 )
             )
             .then(Commands.literal("seteffect")
-                .requires(c -> c.getExecutor().hasPermission("infuse.seteffect"))
+                .requires(c -> c.getSender().hasPermission("infuse.seteffect"))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .then(Commands.argument("effect", CustomArgumentTypes.INFUSE_EFFECT)
                         .then(Commands.argument("slot", CustomArgumentTypes.SLOT)
@@ -72,26 +72,26 @@ public class InfuseCommand {
                 )
             )
             .then(Commands.literal("cleareffects")
-                .requires(c -> c.getExecutor().hasPermission("infuse.cleareffects"))
+                .requires(c -> c.getSender().hasPermission("infuse.cleareffects"))
                 .executes(c -> cmd.clearEffects(c, null))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .executes(c -> cmd.clearEffects(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
                 )
             )
             .then(Commands.literal("cooldown")
-                .requires(c -> c.getExecutor().hasPermission("infuse.cooldown"))
+                .requires(c -> c.getSender().hasPermission("infuse.cooldown"))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .executes(c -> cmd.cooldown(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
                 )
             )
             .then(Commands.literal("controls")
-                .requires(c -> c.getExecutor().hasPermission("infuse.controls") && c.getExecutor() instanceof Player)
+                .requires(c -> c.getSender().hasPermission("infuse.controls") && c.getSender() instanceof Player)
                 .then(Commands.argument("choice", CustomArgumentTypes.CONTROL_MODE)
                     .executes(c -> cmd.controls(c, c.getArgument("choice", String.class)))
                 )
             )
             .then(Commands.literal("help")
-                .requires(c -> c.getExecutor().hasPermission("infuse.help"))
+                .requires(c -> c.getSender().hasPermission("infuse.help"))
                 .executes(cmd::help)
             )
             .build();
@@ -178,7 +178,7 @@ public class InfuseCommand {
             return 1;
         }
 
-        if (target == null || !target.isOnline()) {
+        if (!target.isOnline()) {
             sender.sendMessage(new Message(MessageType.ERROR_TARGET_NOT_FOUND).toComponent());
             return 1;
         }
@@ -266,7 +266,7 @@ public class InfuseCommand {
             return 1;
         }
 
-        if (target == null || !target.isOnline()) {
+        if (!target.isOnline()) {
             sender.sendMessage(new Message(MessageType.ERROR_TARGET_NOT_FOUND).toComponent());
             return 1;
         }

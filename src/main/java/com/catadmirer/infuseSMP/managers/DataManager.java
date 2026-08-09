@@ -83,15 +83,19 @@ public class DataManager {
      * @return Whether or not the file was created successfully.
      */
     public boolean createFile(boolean replace) {
+        if (dataFile.exists() && replace) {
+            dataFile.delete();
+        } else if (dataFile.exists()) {
+            return true;
+        }
+
         // Creating the file if it doesn't exist.
-        if (!dataFile.exists()) {
-            try {
-                dataFile.getParentFile().mkdirs();
-                dataFile.createNewFile();
-            } catch (IOException e) {
-                Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
-                return false;
-            }
+        try {
+            dataFile.getParentFile().mkdirs();
+            dataFile.createNewFile();
+        } catch (IOException e) {
+            Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
+            return false;
         }
 
         return true;
@@ -199,7 +203,7 @@ public class DataManager {
     public void applyUpdates() {
         try {
             Scanner scanner = new Scanner(dataFile);
-            StringBuffer inputBuffer = new StringBuffer();
+            StringBuilder inputBuffer = new StringBuilder();
             String line;
 
             while (scanner.hasNextLine()) {
@@ -218,6 +222,8 @@ public class DataManager {
             FileOutputStream fileOut = new FileOutputStream(dataFile);
             fileOut.write(inputBuffer.toString().getBytes());
             fileOut.close();
-        } catch (IOException err) {}
+        } catch (IOException e) {
+            Infuse.LOGGER.error("Error while updating player data.", e);
+        }
     }
 }

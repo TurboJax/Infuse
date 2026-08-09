@@ -99,7 +99,7 @@ public class Frost extends InfuseEffect {
             if (plugin.getDataManager().isTrusted(player, owner)) continue;
             if (player.getLocation().distance(center) > radius) continue;
             if (!RegionBlocker.getInstance().canBeTargetedBySpark(player)) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(player, Frost.this));
+            if (RegionBlocker.getInstance().isEffectBlocked(player, Frost.this)) continue;
 
             affectedPlayers.add(player);
             AttributeInstance jumpAttribute = player.getAttribute(Attribute.JUMP_STRENGTH);

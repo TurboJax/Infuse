@@ -33,10 +33,16 @@ public class RecipeManager {
 
     /**
      * Manager functionality for when the plugin is reloaded.
-     *
+     * <p>
      * In this case, it unregisters all the recipes then adds them back.
      */
     public void reload() {
+        try {
+            recipesConfig.load(recipesFile);
+        } catch (Exception e) {
+            Infuse.LOGGER.error("Could not reload recipes.yml", e);
+        }
+
         // Removing all the infuse recipes
         for (InfuseEffect effect : InfuseEffect.getRegisteredEffects().values()) {
             Bukkit.removeRecipe(getRecipeKey(effect), true);
@@ -73,7 +79,7 @@ public class RecipeManager {
 
             String materialName = ingredientsConfig.getString(key);
             if (materialName == null) {
-                Infuse.LOGGER.error("The infuse effect '%s' has failed to register its recipe, A ingredient has not be defined properly.".formatted(baseKey));
+                Infuse.LOGGER.error("The infuse effect '{}' has failed to register its recipe, A ingredient has not been defined properly.", baseKey);
             }
 
             Material ingredientMaterial = Material.valueOf(materialName.toUpperCase());

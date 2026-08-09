@@ -290,7 +290,7 @@ public class Emerald extends InfuseEffect {
                 if (!list.isEmpty()) {
                     EnchantmentInstance enchantmentinstance = (EnchantmentInstance) list.get(random.nextInt(list.size()));
 
-                    Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment = null;
+                    Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment;
                     int level;
 
                     Class<EnchantmentInstance> clazz = EnchantmentInstance.class;

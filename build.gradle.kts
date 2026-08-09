@@ -54,6 +54,7 @@ tasks.processResources {
 }
 
 tasks.register("resetAndRun") {
+    description = "Resets the server files and reruns it"
     delete("run/plugins/$rootProject.name")
     finalizedBy("runServer")
 }

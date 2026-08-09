@@ -68,9 +68,7 @@ public class Feather extends InfuseEffect {
 
         CooldownManager.setTimes(playerUUID, "feather", duration, cooldown);
 
-        owner.getScheduler().runDelayed(plugin, t -> {
-            CooldownManager.setDuration(playerUUID, "feathermace", 5L);
-        }, null, 10);
+        owner.getScheduler().runDelayed(plugin, t -> CooldownManager.setDuration(playerUUID, "feathermace", 5L), null, 10);
     }
 
     @Override

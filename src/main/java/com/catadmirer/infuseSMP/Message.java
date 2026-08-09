@@ -200,7 +200,7 @@ public class Message {
 
         public final List<String> placeholders;
 
-        private MessageType(String... placeholders) {
+        MessageType(String... placeholders) {
             this.placeholders = List.of(placeholders);
         }
     }

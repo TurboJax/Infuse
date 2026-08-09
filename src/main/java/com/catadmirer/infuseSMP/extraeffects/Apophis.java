@@ -359,20 +359,20 @@ public class Apophis extends InfuseEffect {
             profile.setProperty(new ProfileProperty("textures", value, signature));
 
             owner.setPlayerProfile(profile);
-        } catch (FileNotFoundException err) {}
+        } catch (FileNotFoundException err) {
+            return;
+        }
 
         // Deleting the disguise file
         if (disguiseFile.exists()) {
             disguiseFile.delete();
         }
-
-        return;
     }
 
     private void showAndUpdateHealthAboveEntity(Entity player) {
         Location ploc = player.getLocation().add(0, 2.5, 0);
 
-        TextDisplay as = (TextDisplay) ploc.getWorld().spawn(ploc, TextDisplay.class);
+        TextDisplay as = ploc.getWorld().spawn(ploc, TextDisplay.class);
 
         as.setGravity(false);
         as.setCustomNameVisible(true);
@@ -608,7 +608,7 @@ public class Apophis extends InfuseEffect {
                 if (!list.isEmpty()) {
                     EnchantmentInstance enchantmentinstance = (EnchantmentInstance) list.get(random.nextInt(list.size()));
 
-                    Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment = null;
+                    Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment;
                     int level;
 
                     Class<EnchantmentInstance> clazz = EnchantmentInstance.class;

@@ -3,7 +3,6 @@ package com.catadmirer.infuseSMP.util;
 import com.destroystokyo.paper.MaterialSetTag;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -36,10 +35,6 @@ public class ItemUtil {
         if (item == null) return false;
 
         return MaterialSetTag.ITEMS_HOES.isTagged(item.getType());
-    }
-
-    public static void giveOrDropItem(HumanEntity player, ItemStack... items) {
-        player.getInventory().addItem(items).forEach((i, extra) -> player.getWorld().dropItem(player.getLocation(), extra));
     }
 
     public static void applySpecialEnchantment(ItemStack item, NamespacedKey key, Enchantment enchantment, int newLevel) {

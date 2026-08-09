@@ -190,9 +190,7 @@ public abstract class InfuseEffect implements Listener {
         // Adjusting item data
         item.setData(DataComponentTypes.CUSTOM_NAME, getName().toComponent());
         item.setData(DataComponentTypes.LORE, ItemLore.lore(getLore().toComponentList()));
-        item.editPersistentDataContainer(c -> {
-            c.set(EFFECT_KEY, PersistentDataType.STRING, toString());
-        });
+        item.editPersistentDataContainer(c -> c.set(EFFECT_KEY, PersistentDataType.STRING, toString()));
 
         item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.POTION_CONTENTS));
         item.setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().customColor(org.bukkit.Color.fromARGB(potionColor.getRGB())));
