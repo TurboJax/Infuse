@@ -132,6 +132,7 @@ public class Message {
         ERROR_INVALID_COMMAND,
         ERROR_RITUAL_ACTIVE,
         ERROR_TARGET_NOT_FOUND,
+        RITUAL_INTERRUPTED("effect_name"),
 
         // Effect messages
         EMERALD_NAME,

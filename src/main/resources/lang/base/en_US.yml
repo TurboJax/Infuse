@@ -97,6 +97,8 @@ error_invalid_command: "<red>Invalid command."
 error_ritual_active: "<red>A ritual is already in progress!"
 error_target_not_found: "<red>Player not found or not online."
 
+ritual_interrupted: "<red>The %effect_name% <reset><red>ritual was interrupted!"
+
 emerald_name: "<#009420>Emerald Effect"
 emerald_lore:
   - "<#009420><b>ᴘᴀꜱꜱɪᴠᴇ ᴇꜰꜰᴇᴄᴛꜱ:"
