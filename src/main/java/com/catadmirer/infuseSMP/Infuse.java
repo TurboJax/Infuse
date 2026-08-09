@@ -38,6 +38,7 @@ public class Infuse extends JavaPlugin {
     private final GlobalLoop loop;
     private final RecipeManager recipeManager;
     private final HitTracker hitTracker;
+    private final RitualManager ritualManager;
 
     @NonNull
     public static Infuse getInstance() {
@@ -51,6 +52,7 @@ public class Infuse extends JavaPlugin {
         this.loop = new GlobalLoop(this);
         this.recipeManager = new RecipeManager(this);
         this.hitTracker = new HitTracker(this);
+        this.ritualManager = new RitualManager();
     }
 
     public void onLoad() {
@@ -142,8 +144,8 @@ public class Infuse extends JavaPlugin {
         // Sending the log message
         LOGGER.info("Infuse Plugin is disabling...");
 
-        // Removing ritual beams
-        EffectCraftManager.removeBeam();
+        // Stopping existing rituals
+        ritualManager.stopRitual();
 
         // Finalizing the message
         LOGGER.info("Infuse Plugin has been disabled!");
@@ -270,5 +272,9 @@ public class Infuse extends JavaPlugin {
 
     public HitTracker getHitTracker() {
         return hitTracker;
+    }
+
+    public RitualManager getRitualManager() {
+        return ritualManager;
     }
 }
