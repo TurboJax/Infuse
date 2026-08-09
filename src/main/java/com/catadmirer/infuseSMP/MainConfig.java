@@ -91,18 +91,6 @@ public class MainConfig {
         return config.getBoolean("allow_infinite_effects");
     }
 
-    public int ritualDuration() {
-        return config.getInt("ritual_duration");
-    }
-
-    public int ritualDurationEnder() {
-        return config.getInt("ritual_duration_ender");
-    }
-
-    public boolean ritualBeacon() {
-        return config.getBoolean("ritual_beacon");
-    }
-
     public boolean emptyEffectIcon() {
         return config.getBoolean("empty_effect_icon");
     }
@@ -111,12 +99,32 @@ public class MainConfig {
         return config.getBoolean("player_head_drops");
     }
 
+    public int ritualDuration() {
+        return config.getInt("rituals.duration", 600);
+    }
+
+    public int ritualDurationEnder() {
+        return config.getInt("rituals.ender_duration", 3600);
+    }
+
+    public boolean regularBroadcast() {
+        return config.getBoolean("rituals.broadcast_regular", true);
+    }
+
     public boolean enableDiscordBroadcasts() {
-        return config.getBoolean("enable_discord_broadcasts");
+        return config.getBoolean("rituals.send_webhooks", false);
     }
 
     public String discordWebhookUrl() {
-        return config.getString("discord_webhook_url");
+        return config.getString("rituals.webhook_url", "");
+    }
+
+    public boolean ritualBeacon() {
+        return config.getBoolean("rituals.beacon", true);
+    }
+
+    public boolean useImmortalBrewers() {
+        return config.getBoolean("rituals.immortal_brewing_stands", true);
     }
 
     public boolean brewingGui() {
@@ -137,10 +145,6 @@ public class MainConfig {
 
     public boolean enableApophis() {
         return config.getBoolean("extra_effects.Apophis");
-    }
-
-    public boolean regularBroadcast() {
-        return config.getBoolean("regular_effect_broadcast");
     }
 
     public boolean enableThief() {
@@ -355,6 +359,16 @@ public class MainConfig {
     }
 
     public void applyUpdates() {
+        if (config.contains("ritual_duration")) {
+            config.set("rituals.duration", config.get("ritual_duration"));
+            config.set("rituals.ender_duration", config.get("ritual_duration_ender"));
+            config.set("rituals.broadcast_regular", config.get("regular_effect_broadcast"));
+            config.set("rituals.send_webhooks", config.get("enable_discord_broadcasts"));
+            config.set("rituals.webhook_url", config.get("discord_webhook_url"));
+            config.set("rituals.beacon", config.get("ritual_beacon"));
+            config.set("rituals.immortal_brewing_stands", true);
+        }
+
         if (!config.contains("invis_deaths")) config.set("invis_deaths", null);
         if (!config.contains("invis.hide_kills")) config.set("invis.hide_kills", false);
         if (!config.contains("invis.hide_deaths")) config.set("invis.hide_deaths", false);
