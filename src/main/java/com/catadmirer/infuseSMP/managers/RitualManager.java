@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -46,6 +47,7 @@ public class RitualManager {
     @Nullable private InfuseEffect effect;
     @Nullable private Location location;
     @Nullable private ImmortalBrewer immortalBrewer;
+    @Nullable private BukkitTask task;
 
     public RitualManager() {
         plugin = Infuse.getInstance();
@@ -165,7 +167,7 @@ public class RitualManager {
 
         // Starting the ritual progress bar
         final int period = 1;
-        new BukkitRunnable() {
+        task = new BukkitRunnable() {
             float progress = 1;
             final float progressDecrement = period / (ritualDuration * 20f);
 
@@ -239,6 +241,9 @@ public class RitualManager {
             audience.hideBossBar(bossBar);
         }
 
+        // Stopping the ritual task
+        if (task != null) task.cancel();
+
         // Removing the beam
         if (enderCrystal != null) enderCrystal.remove();
 
@@ -251,6 +256,7 @@ public class RitualManager {
         enderCrystal = null;
         immortalBrewer = null;
         location = null;
+        task = null;
     }
 
     private void sendToDiscord(String webhookUrl, String message) {
