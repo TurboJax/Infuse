@@ -78,10 +78,10 @@ public class RitualManager {
         return active && immortalBrewer != null;
     }
 
-    public boolean startRitual(HumanEntity player, InfuseEffect effect, Location location) {
+    public void startRitual(HumanEntity player, InfuseEffect effect, Location location) {
         if (active) {
             player.sendMessage(new Message(Message.MessageType.ERROR_RITUAL_ACTIVE).toComponent());
-            return false;
+            return;
         }
 
         active = true;
@@ -197,8 +197,6 @@ public class RitualManager {
                 bossBar.progress(progress);
             }
         }.runTaskTimer(this.plugin, 0, period);
-
-        return true;
     }
 
     /**

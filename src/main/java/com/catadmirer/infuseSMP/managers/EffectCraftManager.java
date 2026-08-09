@@ -4,6 +4,7 @@ import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.events.EffectCraftEvent;
 import com.catadmirer.infuseSMP.inventories.StationSelectionMenu;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -70,6 +71,9 @@ public class EffectCraftManager implements Listener {
 
         // If the effect is not augmented, just craft it
         if (!effect.isAugmented())  {
+            // Calling the EffectCraftEvent
+            new EffectCraftEvent(player, effect).callEvent();
+
             // Announcing the effect being crafted if the config is enabled
             if (!plugin.getMainConfig().regularBroadcast()) return;
 
@@ -93,14 +97,17 @@ public class EffectCraftManager implements Listener {
             return;
         }
 
-        // Starting the ritual
-        boolean started = plugin.getRitualManager().startRitual(player, effect, brewerLocation);
-
-        // Handling if any rituals were already active.
-        if (!started) {
+        // Making sure no rituals were active.
+        if (plugin.getRitualManager().isActive()) {
             event.setCancelled(true);
             return;
         }
+
+        // Starting the ritual
+        plugin.getRitualManager().startRitual(player, effect, brewerLocation);
+
+        // Calling the EffectCraftEvent
+        new EffectCraftEvent(player, effect).callEvent();
 
         // Removing the ingredients
         event.getInventory().forEach(item -> {
