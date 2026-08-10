@@ -6,7 +6,6 @@ import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -82,70 +81,5 @@ public class ActionBarUpdater extends BukkitRunnable {
 
     public String getSpaceTimeStr(String timeStr) {
         return "\ue905".repeat(timeStr.length() - 1) + (timeStr.contains(":") ? "\ue904" : "\ue905");
-    }
-
-    public void run2() {
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            UUID uuid = player.getUniqueId();
-
-            // Composing the action bar
-            String key;
-            InfuseEffect effect;
-
-            String placeholder = plugin.getMainConfig().emptyEffectIcon() ? "\uE901" : "";
-
-            String lSide = "";
-            // Loading info for the first effect
-            effect = plugin.getDataManager().getEffect(uuid, "1");
-            if (effect == null) {
-                lSide = " " + placeholder + "\ue904";
-            } else {
-                key = effect.plainKey();
-                if (CooldownManager.isEffectActive(uuid, key)) {
-                    long timeLeft = CooldownManager.getEffectTimeLeft(uuid, key) / 1000L;
-                    lSide = "<b><#" + Integer.toHexString(effect.potionColor().getRGB() & 0xFFFFFF) + ">" + MessageUtil.formatTime(timeLeft) + "</b><white> \ue905" + effect.getActiveIcon();
-                } else if (CooldownManager.isOnCooldown(uuid, key)) {
-                    long timeLeft = CooldownManager.getCooldownTimeLeft(uuid, key) / 1000L;
-                    lSide = "<b><white>" + MessageUtil.formatTime(timeLeft) + "</b> " + effect.getIcon() + "\ue904";
-                } else {
-                    lSide = " " + effect.getIcon() + "\ue904";
-                }
-            }
-
-            // Loading info for the second effect
-            String rSide;
-            effect = plugin.getDataManager().getEffect(uuid, "2");
-            if (effect == null) {
-                rSide = "<white>" + placeholder + "\ue904 ";
-            } else {
-                key = effect.plainKey();
-                if (CooldownManager.isEffectActive(uuid, key)) {
-                    long timeLeft = CooldownManager.getEffectTimeLeft(uuid, key) / 1000L;
-                    rSide = "<white>" + effect.getActiveIcon() + "\ue905 <#" + Integer.toHexString(effect.potionColor().getRGB() & 0xFFFFFF) + "><b>" + MessageUtil.formatTime(timeLeft) + "</b>";
-                } else if (CooldownManager.isOnCooldown(uuid, key)) {
-                    long timeLeft = CooldownManager.getCooldownTimeLeft(uuid, key) / 1000L;
-                    rSide = "<white>" + effect.getIcon() + "\ue904 <b>" + MessageUtil.formatTime(timeLeft) + "</b>";
-                } else {
-                    rSide = "<white>" + effect.getIcon() + "\ue904 ";
-                }
-            }
-
-            // Making sure both sides are the same length
-            int lSize = mm.stripTags(lSide).length();
-            int rSize = mm.stripTags(rSide).length();
-            Component msg = mm.deserialize(lSide + " " + rSide);
-
-            int diff = lSize - rSize;
-            Component spacing = Component.text("\ue904\ue904\ue904\ue904".repeat(Math.abs(diff)));
-
-            if (diff > 0) {
-                msg = msg.append(spacing);
-            } else {
-                msg = spacing.append(msg);
-            }
-
-            // Sending the action bar
-            player.sendActionBar(msg);
-        });
     }
 }

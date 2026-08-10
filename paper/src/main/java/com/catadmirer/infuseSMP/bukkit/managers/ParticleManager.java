@@ -1,6 +1,6 @@
 package com.catadmirer.infuseSMP.bukkit.managers;
 
-import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import com.catadmirer.infuseSMP.bukkit.effects.Ender;
@@ -22,7 +22,7 @@ public class ParticleManager {
 
         // Handling special particles for ender effect
         // TODO: Decide whether or not to keep this
-        if (effect.id() == EffectIds.ENDER) {
+        if (effect.id() == EffectConstants.Id.ENDER.value()) {
             player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, player.getLocation().add(0, 1, 0), 32, 0.3, 0.5,
                     0.3, 0);
             return;

@@ -6,9 +6,9 @@ import net.kyori.adventure.key.Key;
 import java.util.List;
 
 public interface MainConfig {
-    void load();
+    boolean load();
 
-    void save();
+    boolean save();
 
     void applyUpdates();
 
@@ -31,6 +31,8 @@ public interface MainConfig {
     boolean enableDiscordBroadcasts();
 
     String discordWebhookUrl();
+
+    boolean useImmortalBrewers();
 
     boolean brewingGui();
 

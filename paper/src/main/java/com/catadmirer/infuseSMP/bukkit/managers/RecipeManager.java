@@ -2,7 +2,9 @@ package com.catadmirer.infuseSMP.bukkit.managers;
 
 import java.io.File;
 
+import com.catadmirer.infuseSMP.bukkit.BukkitEffectRegistry;
 import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.bukkit.effects.BukkitEffect;
 import com.catadmirer.infuseSMP.bukkit.effects.Ender;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.Bukkit;
@@ -18,11 +20,13 @@ import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 
 public class RecipeManager {
     private final InfusePlugin plugin;
+    private final BukkitEffectRegistry effectRegistry;
     private final File recipesFile;
     private final FileConfiguration recipesConfig;
 
     public RecipeManager(InfusePlugin plugin) {
         this.plugin = plugin;
+        this.effectRegistry = plugin.getEffectRegistry();
 
         recipesFile = new File(plugin.getDataFolder(), "recipes.yml");
         if (!recipesFile.exists()) {
@@ -34,12 +38,18 @@ public class RecipeManager {
 
     /**
      * Manager functionality for when the plugin is reloaded.
-     *
+     * <p>
      * In this case, it unregisters all the recipes then adds them back.
      */
     public void reload() {
+        try {
+            recipesConfig.load(recipesFile);
+        } catch (Exception e) {
+            Infuse.LOGGER.error("Could not reload recipes.yml", e);
+        }
+
         // Removing all the infuse recipes
-        for (InfuseEffect effect : InfuseEffect.getRegisteredEffects().values()) {
+        for (InfuseEffect effect : effectRegistry.getRegisteredEffects()) {
             Bukkit.removeRecipe(getRecipeKey(effect), true);
         }
 
@@ -49,7 +59,7 @@ public class RecipeManager {
 
     /** Registers the recipe for each effect. */
     public void registerRecipes() {
-        for (InfuseEffect effect : InfuseEffect.getRegisteredEffects().values()) {
+        for (InfuseEffect effect : effectRegistry.getRegisteredEffects()) {
             if (!(isRecipeEnabled(effect))) continue;
             ShapedRecipe recipe = getRecipe(effect.getRegularVersion());
 
@@ -64,7 +74,7 @@ public class RecipeManager {
     public ShapedRecipe getRecipe(InfuseEffect mapping) {
         String baseKey = mapping.plainKey();
         NamespacedKey recipeKey = new NamespacedKey(plugin, baseKey);
-        ShapedRecipe effectRecipe = new ShapedRecipe(recipeKey, mapping.getRegularVersion().createItem());
+        ShapedRecipe effectRecipe = new ShapedRecipe(recipeKey, ((BukkitEffect) mapping.getRegularVersion()).createItem());
 
         effectRecipe.shape(recipesConfig.getStringList(baseKey + ".shape").toArray(String[]::new));
 
@@ -74,7 +84,7 @@ public class RecipeManager {
 
             String materialName = ingredientsConfig.getString(key);
             if (materialName == null) {
-                Infuse.LOGGER.error("The infuse effect '%s' has failed to register its recipe, A ingredient has not be defined properly.".formatted(baseKey));
+                Infuse.LOGGER.error("The infuse effect '{}' has failed to register its recipe, A ingredient has not been defined properly.", baseKey);
             }
 
             Material ingredientMaterial = Material.valueOf(materialName.toUpperCase());
@@ -120,19 +130,19 @@ public class RecipeManager {
         ItemStack item = recipe.getResult();
 
         // The returned EffectMapping should always be the regular form
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = effectRegistry.fromItem(item);
         if (effect == null) return null;
         if (effect.augmented()) return null;
 
         // Checking if the augmented limit has been reached
         InfuseEffect augEffect = effect.getAugmentedVersion();
         if (plugin.getMainConfig().getCraftLimit(augEffect) > plugin.getDataManager().getExistingCount(augEffect)) {
-            return augEffect.createItem();
+            return ((BukkitEffect) augEffect).createItem();
         }
 
         // Checking if the regular limit has been reached
         if (plugin.getMainConfig().getCraftLimit(effect) > plugin.getDataManager().getExistingCount(effect)) {
-            return effect.createItem();
+            return ((BukkitEffect) effect).createItem();
         }
 
         // Craft limits have been reached, return null

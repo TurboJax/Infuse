@@ -18,22 +18,29 @@ lang: en_US
 
 allow_infinite_effects: false
 
-ritual_duration: 600  # Duration in seconds (10 minutes)
-ritual_duration_ender: 3600 # Duration in seconds (1hr)
-
-regular_effect_broadcast: true
-
-ritual_beacon: true
-
 empty_effect_icon: true
 
 player_head_drops: true
 
-enable_discord_broadcasts: false
-
-discord_webhook_url: ""
-
 brewing_gui: true
+
+#
+# Ritual configs
+#
+rituals:
+  # Ritual duration in seconds
+  duration: 600 # 10 minutes
+  # Ender effect ritual duration in seconds
+  ender_duration: 3600 # 1 hour
+  # If true, broadcasts the location of the brewing stand when crafting a regular effect.
+  broadcast_regular: true
+  # If true, will attempt to send a discord webhook to the specified url
+  send_webhooks: false
+  webhook_url: ""
+  # Whether to show an ender crystal beam at the ritual's location.
+  beacon: true
+  # If set to false, rituals will be canceled when the brewing stand is broken.
+  immortal_brewing_stands: true
 
 # Determines what effect is dropped.
 # "random" = Drops effect 1 or 2 at random.  If no effect is in the random slot, it will drop the effect in the other slot.
@@ -240,7 +247,7 @@ regen:
   blacklisted-worlds:
 
 speed:
-  dashMultiplier: 20
+  dashMultiplier: 2
   playerVelocityMultiplier: 2
   cooldown:
     default: 21

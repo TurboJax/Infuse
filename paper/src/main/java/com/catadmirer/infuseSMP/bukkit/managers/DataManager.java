@@ -1,5 +1,6 @@
 package com.catadmirer.infuseSMP.bukkit.managers;
 
+import com.catadmirer.infuseSMP.platform.services.EffectRegistry;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
@@ -84,15 +85,19 @@ public class DataManager {
      * @return Whether or not the file was created successfully.
      */
     public boolean createFile(boolean replace) {
+        if (dataFile.exists() && replace) {
+            dataFile.delete();
+        } else if (dataFile.exists()) {
+            return true;
+        }
+
         // Creating the file if it doesn't exist.
-        if (!dataFile.exists()) {
-            try {
-                dataFile.getParentFile().mkdirs();
-                dataFile.createNewFile();
-            } catch (IOException e) {
-                Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
-                return false;
-            }
+        try {
+            dataFile.getParentFile().mkdirs();
+            dataFile.createNewFile();
+        } catch (IOException e) {
+            Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
+            return false;
         }
 
         return true;
@@ -151,7 +156,7 @@ public class DataManager {
     @Nullable
     public InfuseEffect getEffect(UUID playerUUID, String slot) {
         String effectKey = config.getString(playerUUID.toString() + "." + slot, null);
-        InfuseEffect effect = InfuseEffect.fromString(effectKey);
+        InfuseEffect effect = InfusePlugin.getInstance().getEffectRegistry().fromKey(effectKey);
         if (effectKey != null && effect == null) {
             Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
         }
@@ -200,7 +205,7 @@ public class DataManager {
     public void applyUpdates() {
         try {
             Scanner scanner = new Scanner(dataFile);
-            StringBuffer inputBuffer = new StringBuffer();
+            StringBuilder inputBuffer = new StringBuilder();
             String line;
 
             while (scanner.hasNextLine()) {
@@ -219,6 +224,8 @@ public class DataManager {
             FileOutputStream fileOut = new FileOutputStream(dataFile);
             fileOut.write(inputBuffer.toString().getBytes());
             fileOut.close();
-        } catch (IOException err) {}
+        } catch (IOException e) {
+            Infuse.LOGGER.error("Error while updating player data.", e);
+        }
     }
 }

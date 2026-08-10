@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.effects;
 
-import com.catadmirer.infuseSMP.platform.BossBarColor;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.key.Key;
 
 import java.awt.Color;
 
@@ -9,14 +10,16 @@ public abstract class BaseEffect implements InfuseEffect {
     protected final String plainKey;
     protected final boolean augmented;
     protected final Color potionColor;
-    protected final BossBarColor ritualColor;
+    protected final BossBar.Color ritualColor;
+    protected final Key backgroundMaterial;
     
-    protected BaseEffect(int id, String plainKey, boolean augmented, Color potionColor, BossBarColor ritualColor) {
+    protected BaseEffect(String plainKey, int id, boolean augmented, Color potionColor, BossBar.Color ritualColor, Key backgroundMaterial) {
         this.id = id;
         this.plainKey = plainKey;
         this.augmented = augmented;
         this.potionColor = potionColor;
         this.ritualColor = ritualColor;
+        this.backgroundMaterial = backgroundMaterial;
     }
 
     public int id() {
@@ -39,8 +42,12 @@ public abstract class BaseEffect implements InfuseEffect {
         return potionColor;
     }
 
-    public BossBarColor ritualColor() {
+    public BossBar.Color ritualColor() {
         return ritualColor;
+    }
+
+    public Key backgroundMaterial() {
+        return backgroundMaterial;
     }
 
     @Override

@@ -2,7 +2,7 @@ package com.catadmirer.infuseSMP.bukkit;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import org.bukkit.NamespacedKey;
+import net.kyori.adventure.key.Key;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -25,7 +25,7 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     /**
      * Reloads the configuration.
      *
-     * @return Whether the configuration was loaded successfully.
+     * @return Whether the configuration was loaded successfully or not.
      */
     public boolean load() {
         // Creating the file if it doesn't exist.
@@ -42,8 +42,7 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
         } catch (InvalidConfigurationException e) {
             Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", file.getName());
         } catch (IOException e) {
-            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", file.getName());
-            e.printStackTrace();
+            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", file.getName(), e);
         }
 
         return false;
@@ -52,7 +51,7 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     /**
      * Writes the config to the file.
      *
-     * @return Whether or not the config was successfully written.
+     * @return Whether the config was successfully written or not.
      */
     public boolean save() {
         // Creating the file if it doesn't exist.
@@ -77,11 +76,11 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     }
 
     @Override
-    public List<NamespacedKey> getBlacklistedWorlds(InfuseEffect effect) {
+    public List<Key> getBlacklistedWorlds(InfuseEffect effect) {
         return config.getStringList(effect.plainKey() + ".blacklisted-worlds")
             .stream()
             .filter(Objects::nonNull)
-            .map(NamespacedKey::fromString)
+            .map(Key::key)
             .toList();
     }
 
@@ -95,22 +94,6 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
         return config.getBoolean("allow_infinite_effects");
     }
 
-    @Override
-    public int ritualDuration() {
-        return config.getInt("ritual_duration");
-    }
-
-    @Override
-    public int ritualDurationEnder() {
-        return config.getInt("ritual_duration_ender");
-    }
-
-    @Override
-    public boolean ritualBeacon() {
-        return config.getBoolean("ritual_beacon");
-    }
-
-    @Override
     public boolean emptyEffectIcon() {
         return config.getBoolean("empty_effect_icon");
     }
@@ -121,13 +104,38 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     }
 
     @Override
+    public int ritualDuration() {
+        return config.getInt("rituals.duration", 600);
+    }
+
+    @Override
+    public int ritualDurationEnder() {
+        return config.getInt("rituals.ender_duration", 3600);
+    }
+
+    @Override
+    public boolean regularBroadcast() {
+        return config.getBoolean("rituals.broadcast_regular", true);
+    }
+
+    @Override
     public boolean enableDiscordBroadcasts() {
-        return config.getBoolean("enable_discord_broadcasts");
+        return config.getBoolean("rituals.send_webhooks", false);
     }
 
     @Override
     public String discordWebhookUrl() {
-        return config.getString("discord_webhook_url");
+        return config.getString("rituals.webhook_url", "");
+    }
+
+    @Override
+    public boolean ritualBeacon() {
+        return config.getBoolean("rituals.beacon", true);
+    }
+
+    @Override
+    public boolean useImmortalBrewers() {
+        return config.getBoolean("rituals.immortal_brewing_stands", true);
     }
 
     @Override
@@ -147,17 +155,12 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
 
     @Override
     public List<InfuseEffect> joinEffects() {
-        return config.getStringList("join_effects").stream().map(InfuseEffect::fromString).filter(Objects::nonNull).toList();
+        return config.getStringList("join_effects").stream().map(plugin.getEffectRegistry()::fromKey).map(e -> (InfuseEffect) e).filter(Objects::nonNull).toList();
     }
 
     @Override
     public boolean enableApophis() {
         return config.getBoolean("extra_effects.Apophis");
-    }
-
-    @Override
-    public boolean regularBroadcast() {
-        return config.getBoolean("regular_effect_broadcast");
     }
 
     @Override
@@ -422,6 +425,16 @@ public class MainConfig implements com.catadmirer.infuseSMP.MainConfig {
     }
 
     public void applyUpdates() {
+        if (config.contains("ritual_duration")) {
+            config.set("rituals.duration", config.get("ritual_duration"));
+            config.set("rituals.ender_duration", config.get("ritual_duration_ender"));
+            config.set("rituals.broadcast_regular", config.get("regular_effect_broadcast"));
+            config.set("rituals.send_webhooks", config.get("enable_discord_broadcasts"));
+            config.set("rituals.webhook_url", config.get("discord_webhook_url"));
+            config.set("rituals.beacon", config.get("ritual_beacon"));
+            config.set("rituals.immortal_brewing_stands", true);
+        }
+
         if (!config.contains("invis_deaths")) config.set("invis_deaths", null);
         if (!config.contains("invis.hide_kills")) config.set("invis.hide_kills", false);
         if (!config.contains("invis.hide_deaths")) config.set("invis.hide_deaths", false);

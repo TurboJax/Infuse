@@ -1,5 +1,6 @@
 package com.catadmirer.infuseSMP.bukkit.listeners;
 
+import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import com.catadmirer.infuseSMP.bukkit.managers.DataManager;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.event.EventHandler;
@@ -17,7 +18,7 @@ public class ItemDespawnListener implements Listener {
     @EventHandler
     public void lowerCraftLimitOnDespawn(ItemDespawnEvent event) {
         ItemStack item = event.getEntity().getItemStack();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = InfusePlugin.getInstance().getEffectRegistry().fromItem(item);
         if (effect == null) return;
 
         // Decrementing the number of crafted effects

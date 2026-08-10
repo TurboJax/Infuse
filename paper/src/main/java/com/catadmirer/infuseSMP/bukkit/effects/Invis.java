@@ -1,11 +1,10 @@
 package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -30,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class Invis extends InfuseEffect {
+public class Invis extends BukkitEffect {
     public static final MiniMessage mm = MiniMessage.miniMessage();
 
     public Invis() {
@@ -38,29 +37,32 @@ public class Invis extends InfuseEffect {
     }
 
     public Invis(boolean augmented) {
-        super("invis", EffectIds.INVIS, augmented, EffectConstants.potionColor(EffectIds.INVIS), EffectConstants.ritualColor(EffectIds.INVIS));
+        super("invis", EffectConstants.Id.INVIS, augmented, EffectConstants.PotionColor.INVIS, EffectConstants.RitualColor.INVIS, EffectConstants.BackgroundColor.INVIS);
     }
 
     @Override
-    public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
-        owner.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, -1, 0, false, false));
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        Player player = PaperPlayer.toBukkit(owner);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, -1, 0, false, false));
     }
 
     @Override
-    public void unequip(Player owner) {
-        owner.removePotionEffect(PotionEffectType.INVISIBILITY);
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {
+        Player player = PaperPlayer.toBukkit(owner);
+        player.removePotionEffect(PotionEffectType.INVISIBILITY);
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
         UUID playerUUID = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         if (CooldownManager.isOnCooldown(playerUUID, "invis")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
-        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -70,19 +72,19 @@ public class Invis extends InfuseEffect {
 
         final double radius = 10;
         final long durationTicks = duration * 20;
-        final World world = owner.getWorld();
+        final World world = player.getWorld();
         final Set<Player> vanishedPlayers = new HashSet<>();
 
-        for (Player player : world.getPlayers()) {
-            if (player.getLocation().distance(owner.getLocation()) > radius) continue;
-            if (!plugin.getDataManager().isTrusted(owner, player)) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(player, this)) continue;
+        for (Player p : world.getPlayers()) {
+            if (p.getLocation().distance(player.getLocation()) > radius) continue;
+            if (!plugin.getDataManager().isTrusted(player, p)) continue;
+            if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(p), this)) continue;
 
-            vanishedPlayers.add(player);
+            vanishedPlayers.add(p);
         }
 
         for (Player vanished : vanishedPlayers) {
-            if (RegionBlocker.getInstance().isEffectBlocked(vanished, this)) continue;
+            if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(vanished), this)) continue;
 
             for (Player other : Bukkit.getOnlinePlayers()) {
                 if (other.equals(vanished)) continue;
@@ -104,7 +106,7 @@ public class Invis extends InfuseEffect {
                     }
 
                 } else {
-                    Location center = owner.getLocation();
+                    Location center = player.getLocation();
 
                     for(int angle = 0; angle < 360; angle += 2) {
                         double rad = Math.toRadians(angle);
@@ -122,9 +124,9 @@ public class Invis extends InfuseEffect {
 
                     for (Player p : world.getPlayers()) {
                         if (p.getLocation().distance(center) > radius) continue;
-                        if (plugin.getDataManager().isTrusted(p, owner)) continue;
-                        if (!RegionBlocker.getInstance().canBeTargetedBySpark(p)) continue;
-                        if (RegionBlocker.getInstance().isEffectBlocked(p, Invis.this)) continue;
+                        if (plugin.getDataManager().isTrusted(p, player)) continue;
+                        if (!plugin.getRegionBlocker().canBeTargetedBySpark(new PaperPlayer(p))) continue;
+                        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(p), Invis.this)) continue;
 
                         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false));
                     }
@@ -180,7 +182,7 @@ public class Invis extends InfuseEffect {
         Player killer = victim.getKiller();
 
         if (killer == null) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(killer, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(killer), this)) return;
 
         String victimName;
         if (plugin.getMainConfig().invisHideDeaths() && plugin.getDataManager().hasEffect(killer, this)) {
@@ -207,10 +209,10 @@ public class Invis extends InfuseEffect {
     public void onProjectileHit(ProjectileHitEvent event) {
         if (!(event.getEntity().getShooter() instanceof Player shooter)) return;
         if (!plugin.getDataManager().hasEffect(shooter, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(shooter, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(shooter), this)) return;
         if (!(event.getEntity() instanceof Arrow)) return;
         if (!(event.getHitEntity() instanceof Player target)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(target), this)) return;
 
         target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0, false, false));
         this.spawnBlackParticles(target, 4);
@@ -220,10 +222,10 @@ public class Invis extends InfuseEffect {
     public void onTenHits(TenHitEvent event) {
         Player attacker = event.getAttacker();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         Player target = event.getTarget();
-        if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(target), this)) return;
         target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0, false, false));
         this.spawnBlackParticles(target, 4);
     }
@@ -232,7 +234,7 @@ public class Invis extends InfuseEffect {
     public void onEntityTarget(EntityTargetEvent event) {
         if (!(event.getTarget() instanceof Player target)) return;
         if (!plugin.getDataManager().hasEffect(target, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(target), this)) return;
 
         event.setCancelled(true);
     }

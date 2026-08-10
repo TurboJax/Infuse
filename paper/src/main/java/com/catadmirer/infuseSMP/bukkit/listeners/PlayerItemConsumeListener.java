@@ -30,7 +30,7 @@ public class PlayerItemConsumeListener implements Listener {
         ItemStack item = event.getItem();
 
         // Getting the effect from the item
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = plugin.getEffectRegistry().fromItem(item);
 
         // Skipping if the effect is not found.
         if (effect == null) return;

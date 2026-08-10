@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.bukkit.listeners;
 
 import com.catadmirer.infuseSMP.bukkit.managers.DataManager;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import java.util.UUID;
@@ -34,14 +35,14 @@ public class PlayerSwapHandItemsListener implements Listener {
             if (lEffect == null) return;
             if (CooldownManager.isOnCooldown(playerUUID, lEffect.plainKey())) return;
             event.setCancelled(true);
-            lEffect.activateSpark(player);
+            lEffect.activateSpark(new PaperPlayer(player));
         } else {
             // Activating the right effect's spark if the player was sneaking and the effect wasn't on cooldown.
             InfuseEffect rEffect = dataManager.getEffect(player.getUniqueId(), "2");
             if (rEffect == null) return;
             if (CooldownManager.isOnCooldown(playerUUID, rEffect.plainKey())) return;
             event.setCancelled(true);
-            rEffect.activateSpark(player);
+            rEffect.activateSpark(new PaperPlayer(player));
         }
     }
 }

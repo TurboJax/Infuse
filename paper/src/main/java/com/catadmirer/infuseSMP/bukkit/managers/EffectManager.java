@@ -3,14 +3,17 @@ package com.catadmirer.infuseSMP.bukkit.managers;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
+import com.catadmirer.infuseSMP.bukkit.effects.BukkitEffect;
 import com.catadmirer.infuseSMP.bukkit.events.EffectEquipEvent;
 import com.catadmirer.infuseSMP.bukkit.events.EffectUnequipEvent;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 @NullMarked
 public class EffectManager {
@@ -18,6 +21,21 @@ public class EffectManager {
 
     public EffectManager(InfusePlugin plugin) {
         this.plugin = plugin;
+    }
+
+
+    /**
+     * Gives a player a join effect
+     *
+     * @param player The {@link Player} to give an effect to
+     * @return An {@link EquipResult} object.  Fails if no join effects were found or there was an effect already in slot 1.  Cancelled if the PlayerEquipEvent call was cancelled.
+     */
+    public EquipResult giveJoinEffect(Player player) {
+        List<InfuseEffect> effects = plugin.getMainConfig().joinEffects();
+        if (effects.isEmpty()) return new EquipResult(EquipResultType.FAIL);
+
+        InfuseEffect effect = effects.get((int) (Math.random() * effects.size()));
+        return equipEffect(player, effect, "1", false);
     }
 
     /**
@@ -60,10 +78,38 @@ public class EffectManager {
 
         // Equipping the effect and updating the player data
         // If the player is in a blocked location, the effect is equipped but not activated.
-        if (!RegionBlocker.getInstance().isEffectBlocked(player, effect)) effect.equip(player);
+        if (!plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), effect)) effect.equip(new PaperPlayer(player));
         plugin.getDataManager().setEffect(player.getUniqueId(), slot, effect);
 
         return new EquipResult(EquipResultType.SUCCESS, effect);
+    }
+
+    /**
+     * Forcefully removes all effects from a player.
+     * Does not make event calls, does not fail, does not give the player their items.
+     *
+     * @param player The {@link Player} to remove effects from
+     */
+    public void removeEffects(Player player) {
+        removeEffect(player, "1");
+        removeEffect(player, "2");
+    }
+
+    /**
+     * Forcefully removes an effect from a player.
+     * Does not make event calls, does not fail, does not give the player their items.
+     *
+     * @param player The {@link Player} to remove an effect from.
+     * @param slot The slot to remove an effect from.
+     */
+    public void removeEffect(Player player, String slot) {
+        // Getting the effect
+        InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
+        if (effect == null) return;
+
+        // Removing the effect
+        effect.unequip(new PaperPlayer(player));
+        plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
     }
 
     /**
@@ -112,7 +158,7 @@ public class EffectManager {
             return new EquipResult(EquipResultType.FAIL);
         }
 
-        player.getInventory().addItem(result.effect.createItem());
+        player.getInventory().addItem(((BukkitEffect) result.effect).createItem());
         // Sending the success message
         Message msg = new Message(MessageType.DRAIN_SUCCESS);
         msg.applyPlaceholder("effect_name", result.effect.getName());
@@ -149,14 +195,14 @@ public class EffectManager {
         }
 
         // Dropping the item
-        player.getWorld().dropItem(player.getLocation(), result.effect.createItem());
+        player.getWorld().dropItem(player.getLocation(), ((BukkitEffect) result.effect).createItem());
 
         return result;
     }
 
     /**
      * Unequips an effect from a player.
-     * Fails if the {@link EffectUnequipEvent} was canceled or if the player's inventory was full.
+     * Fails if the {@link EffectUnequipEvent} was canceled or if there was no effect in the slot.
      *
      * @param player The {@link Player} to remove an effect from.
      * @param slot The slot to remove the effect from.
@@ -170,7 +216,7 @@ public class EffectManager {
         if (!event.callEvent()) return new EquipResult(EquipResultType.CANCELLED, effect);
 
         // Unequipping the effect and updating the player data
-        effect.unequip(player);
+        effect.unequip(new PaperPlayer(player));
         plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
 
         return new EquipResult(EquipResultType.SUCCESS, effect);

@@ -4,7 +4,6 @@ import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import com.catadmirer.infuseSMP.bukkit.effects.Thunder;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
-import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -20,7 +19,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class HitTracker implements Listener {
     private final InfusePlugin plugin;
     private final Map<UUID,Integer> hitTracker = new HashMap<>();
-    Queue<Runnable> decayQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<Runnable> decayQueue = new ConcurrentLinkedQueue<>();
 
     public HitTracker(InfusePlugin plugin) {
         this.plugin = plugin;
@@ -57,7 +56,7 @@ public class HitTracker implements Listener {
 
         // Incrementing by 2 if the thunder effect is registered, the attacker has it, and if they are in the rain.
         Thunder thunder = new Thunder();
-        if (InfuseEffect.isRegistered(thunder) && plugin.getDataManager().hasEffect(attacker, thunder) && attacker.isInRain()) {
+        if (plugin.getEffectRegistry().isRegistered(thunder) && plugin.getDataManager().hasEffect(attacker, thunder) && attacker.isInRain()) {
             hits += 1;
         }
 

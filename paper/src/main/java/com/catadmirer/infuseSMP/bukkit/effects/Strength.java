@@ -1,7 +1,6 @@
 package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
@@ -30,7 +29,7 @@ public class Strength extends BukkitEffect {
     }
 
     public Strength(boolean augmented) {
-        super(EffectIds.STRENGTH, "strength", augmented, EffectConstants.potionColor(EffectIds.STRENGTH), EffectConstants.ritualColor(EffectIds.STRENGTH));
+        super("strength", EffectConstants.Id.STRENGTH, augmented, EffectConstants.PotionColor.STRENGTH, EffectConstants.RitualColor.STRENGTH, EffectConstants.BackgroundColor.STRENGTH);
     }
 
     @Override

@@ -2,9 +2,7 @@ package com.catadmirer.infuseSMP.bukkit;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.InfuseProvider;
-import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.MessageTranslator;
-import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.bukkit.commands.*;
 import com.catadmirer.infuseSMP.bukkit.effects.*;
 import com.catadmirer.infuseSMP.bukkit.extraeffects.*;
@@ -13,27 +11,31 @@ import com.catadmirer.infuseSMP.bukkit.managers.*;
 import com.catadmirer.infuseSMP.bukkit.placeholders.InfusePlaceholders;
 import com.catadmirer.infuseSMP.bukkit.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.bukkit.util.regions.DualRegionBlocker;
-import com.catadmirer.infuseSMP.effects.InfuseEffect;
 
 import java.io.File;
-import java.util.List;
-import java.util.stream.Stream;
 
 import com.catadmirer.infuseSMP.util.RegionBlocker;
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jspecify.annotations.NonNull;
 
 public class InfusePlugin extends JavaPlugin implements Infuse {
+    public static final NamespacedKey JOIN_EFFECT_KEY = new NamespacedKey("infuse", "has_join_effects");
+    public static final MessageComponentSerializer mcs = MessageComponentSerializer.message();
+
     private final MainConfig mainConfig;
     private final RegionBlocker regionBlocker;
+    private final BukkitEffectRegistry effectRegistry;
 
     private final DataManager dataManager;
     private final EffectManager effectManager;
     private final GlobalLoop loop;
     private final RecipeManager recipeManager;
     private final HitTracker hitTracker;
+    private final RitualManager ritualManager;
 
     @NonNull
     public static InfusePlugin getInstance() {
@@ -51,11 +53,14 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
             Infuse.LOGGER.info("WorldGuard is not installed! Using blacklisted-worlds configs");
         }
 
+        this.effectRegistry = new BukkitEffectRegistry();
+
         this.dataManager = new DataManager(this);
         this.effectManager = new EffectManager(this);
         this.loop = new GlobalLoop(this);
         this.recipeManager = new RecipeManager(this);
         this.hitTracker = new HitTracker(this);
+        this.ritualManager = new RitualManager();
 
         InfuseProvider.setInstance(this);
     }
@@ -110,55 +115,21 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
 
     /** Registers the commands for the plugin. */
     private void registerCommands() {
-        getCommand("trust").setExecutor(new TrustCommand(dataManager));
-        getCommand("untrust").setExecutor(new TrustCommand(dataManager));
-        getCommand("recipes").setExecutor(new Recipes(this));
-        getCommand("swap").setExecutor(new SwapEffects(this));
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, e -> {
+            e.registrar().register(SparkCommand.build(this, true));
+            e.registrar().register(SparkCommand.build(this, false));
 
-        getCommand("infuse").setExecutor(new InfuseCommand(this));
-        getCommand("infuse").setTabCompleter(new InfuseCommand(this));
+            e.registrar().register(TrustCommand.build(dataManager, true));
+            e.registrar().register(TrustCommand.build(dataManager, false));
 
-        getCommand("ldrain").setExecutor(new DrainCommand(this));
-        getCommand("rdrain").setExecutor(new DrainCommand(this));
+            e.registrar().register(SwapCommand.build(this));
 
-        getCommand("rspark").setExecutor(new Abilities(this));
-        getCommand("lspark").setExecutor(new Abilities(this));
+            e.registrar().register(InfuseCommand.build(this));
 
-        getCommand("draw").setExecutor(new Draw());
+            e.registrar().register(DrainCommand.build(this, true));
+            e.registrar().register(DrainCommand.build(this, false));
 
-        getCommand("controls").setExecutor((sender, a, b, args) -> {
-            // Making sure only players can run the command
-            if (!(sender instanceof Player player)) {
-                sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
-                return true;
-            }
-
-            // Making sure the command has an argument
-            if (args.length != 1) {
-                player.sendMessage(new Message(MessageType.CONTROLS_USAGE).toComponent());
-                return true;
-            }
-
-            // Getting the selected control mode
-            String choice = args[0].toLowerCase();
-
-            // Validating the control mode string
-            if (!choice.equals("offhand") && !choice.equals("command")) {
-                player.sendMessage(new Message(MessageType.CONTROLS_INVALID_PARAM).toComponent());
-                return true;
-            }
-
-            // Setting the control mode for the player
-            dataManager.setControlMode(player.getUniqueId(), choice);
-            player.addAttachment(this, "ability.use", choice.equals("command"));
-            return true;
-        });
-        getCommand("controls").setTabCompleter((a, b, c, args) -> {
-            if (args.length == 1) {
-                return Stream.of("command", "offhand").filter(opt -> opt.startsWith(args[0])).toList();
-            }
-
-            return List.of();
+            e.registrar().register(DrawCommand.build());
         });
     }
 
@@ -169,8 +140,8 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
         // Sending the log message
         Infuse.LOGGER.info("Infuse Plugin is disabling...");
 
-        // Removing ritual beams
-        EffectCraftManager.removeBeam();
+        // Stopping existing rituals
+        ritualManager.stopRitual();
 
         // Finalizing the message
         Infuse.LOGGER.info("Infuse Plugin has been disabled!");
@@ -181,6 +152,7 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
         Bukkit.getPluginManager().registerEvents(hitTracker, this);
 
         // Registering events for all the listeners
+        Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(dataManager), this);
         Bukkit.getPluginManager().registerEvents(new CrafterCraftListener(), this);
         Bukkit.getPluginManager().registerEvents(new EntityDeathListener(dataManager), this);
         Bukkit.getPluginManager().registerEvents(new EntityDropItemListener(this), this);
@@ -223,22 +195,22 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
     }
 
     private void registerEffects() {
-        InfuseEffect.register(new Emerald());
-        InfuseEffect.register(new Ender());
-        InfuseEffect.register(new Feather());
-        InfuseEffect.register(new Fire());
-        InfuseEffect.register(new Frost());
-        InfuseEffect.register(new Haste());
-        InfuseEffect.register(new Heart());
-        InfuseEffect.register(new Invis());
-        InfuseEffect.register(new Ocean());
-        InfuseEffect.register(new Regen());
-        InfuseEffect.register(new Speed());
-        InfuseEffect.register(new Strength());
-        InfuseEffect.register(new Thunder());
+        effectRegistry.register(new Emerald());
+        effectRegistry.register(new Ender());
+        effectRegistry.register(new Feather());
+        effectRegistry.register(new Fire());
+        effectRegistry.register(new Frost());
+        effectRegistry.register(new Haste());
+        effectRegistry.register(new Heart());
+        effectRegistry.register(new Invis());
+        effectRegistry.register(new Ocean());
+        effectRegistry.register(new Regen());
+        effectRegistry.register(new Speed());
+        effectRegistry.register(new Strength());
+        effectRegistry.register(new Thunder());
 
-        if (mainConfig.enableApophis()) InfuseEffect.register(new Apophis());
-        if (mainConfig.enableThief()) InfuseEffect.register(new Thief());
+        if (mainConfig.enableApophis()) effectRegistry.register(new Apophis());
+        if (mainConfig.enableThief()) effectRegistry.register(new Thief());
     }
 
     @Override
@@ -264,6 +236,10 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
         return regionBlocker;
     }
 
+    public BukkitEffectRegistry getEffectRegistry() {
+        return effectRegistry;
+    }
+
     public DataManager getDataManager() {
         return dataManager;
     }
@@ -274,6 +250,10 @@ public class InfusePlugin extends JavaPlugin implements Infuse {
 
     public HitTracker getHitTracker() {
         return hitTracker;
+    }
+
+    public RitualManager getRitualManager() {
+        return ritualManager;
     }
 
     public RecipeManager getRecipeManager() {

@@ -18,7 +18,7 @@ public class EntityPickupItemListener implements Listener {
     @EventHandler
     public void onPickup(EntityPickupItemEvent event) {
         ItemStack item = event.getItem().getItemStack();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = plugin.getEffectRegistry().fromItem(item);
         if (effect == null) return;
         ParticleManager.dropEffect(plugin, true, effect, event.getItem().getLocation());
     }

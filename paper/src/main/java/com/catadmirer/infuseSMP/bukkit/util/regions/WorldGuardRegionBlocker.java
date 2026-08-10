@@ -45,7 +45,7 @@ public class WorldGuardRegionBlocker implements RegionBlocker {
                 }
             });
 
-        Infuse.LOGGER.info("[InfusePlugin] Successfully hooked into WorldGuard and registered the custom flags.");
+        Infuse.LOGGER.info("Successfully hooked into WorldGuard and registered the custom flags.");
     }
 
     @Override

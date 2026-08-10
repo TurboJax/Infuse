@@ -1,6 +1,6 @@
 package com.catadmirer.infuseSMP.bukkit.util;
 
-import com.catadmirer.infuseSMP.EffectRegistry;
+import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import org.jspecify.annotations.Nullable;
 
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
@@ -41,7 +41,7 @@ public class EffectFlag extends Flag<InfuseEffect> {
     @Override
     public InfuseEffect parseInput(FlagContext context) throws InvalidFlagFormat {
         String key = context.getUserInput();
-        InfuseEffect effect = EffectRegistry.fromString(key);
+        InfuseEffect effect = InfusePlugin.getInstance().getEffectRegistry().fromKey(key);
 
         if (effect != null) return effect;
         
@@ -52,7 +52,7 @@ public class EffectFlag extends Flag<InfuseEffect> {
     public InfuseEffect unmarshal(Object o) {
         if (!(o instanceof String key)) return null;
 
-        return EffectRegistry.fromString(key);
+        return InfusePlugin.getInstance().getEffectRegistry().fromKey(key);
     }
 
     @Override

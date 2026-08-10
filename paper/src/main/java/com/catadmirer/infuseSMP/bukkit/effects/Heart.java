@@ -1,10 +1,9 @@
 package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.bukkit.events.TenHitEvent;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import org.bukkit.Bukkit;
@@ -29,7 +28,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 
-public class Heart extends InfuseEffect {
+public class Heart extends BukkitEffect {
     public static final NamespacedKey heartBoost = new NamespacedKey("infuse", "heart_boost");
     public static final NamespacedKey heartSparkBoost = new NamespacedKey("infuse", "heart_spark_boost");
 
@@ -38,38 +37,43 @@ public class Heart extends InfuseEffect {
     }
 
     public Heart(boolean augmented) {
-        super("heart", EffectIds.HEART, augmented, EffectConstants.potionColor(EffectIds.HEART), EffectConstants.ritualColor(EffectIds.HEART));
+        super("heart", EffectConstants.Id.HEART, augmented, EffectConstants.PotionColor.HEART, EffectConstants.RitualColor.HEART, EffectConstants.BackgroundColor.HEART);
     }
 
     @Override
-    public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        Player player = PaperPlayer.toBukkit(owner);
 
-        AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(heartBoost, 10, Operation.ADD_NUMBER));
-        owner.heal(10);
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
+        attribute.addModifier(new AttributeModifier(heartBoost, 20, Operation.ADD_NUMBER));
+
+        player.heal(20);
     }
 
     @Override
-    public void unequip(Player owner) {
-        AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {
+        Player player = PaperPlayer.toBukkit(owner);
+
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         attribute.removeModifier(heartBoost);
         attribute.removeModifier(heartSparkBoost);
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
         UUID playerUUID = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         if (CooldownManager.isOnCooldown(playerUUID, "heart")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
-        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
-        AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(heartSparkBoost, 10, Operation.ADD_NUMBER));
-        owner.heal(10);
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
+        attribute.addModifier(new AttributeModifier(heartSparkBoost, 20, Operation.ADD_NUMBER));
+        player.heal(20);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -103,7 +107,7 @@ public class Heart extends InfuseEffect {
     private void showAndUpdateHealthAboveEntity(Entity player) {
         Location ploc = player.getLocation().add(0, 2.5, 0);
 
-        TextDisplay as = (TextDisplay) ploc.getWorld().spawn(ploc, TextDisplay.class);
+        TextDisplay as = ploc.getWorld().spawn(ploc, TextDisplay.class);
 
         as.setGravity(false);
         as.setCustomNameVisible(true);
@@ -148,7 +152,7 @@ public class Heart extends InfuseEffect {
     public void heartShowTargetHealth(TenHitEvent event) {
         Player attacker = event.getAttacker();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(attacker), this)) return;
 
         this.showAndUpdateHealthAboveEntity(event.getTarget());
     }
@@ -157,7 +161,7 @@ public class Heart extends InfuseEffect {
     public void onPlayerEat(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), this)) return;
 
         ItemStack item = event.getItem();
         if (item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {

@@ -3,15 +3,14 @@ package com.catadmirer.infuseSMP.bukkit.listeners;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
-import com.catadmirer.infuseSMP.bukkit.managers.EffectCraftManager;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-
-import java.util.List;
+import org.bukkit.persistence.PersistentDataType;
 
 public class PlayerJoinListener implements Listener {
     private final InfusePlugin plugin;
@@ -25,7 +24,7 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
 
         // Giving the player all the infuse recipes
-        InfuseEffect.getRegisteredEffects().values().stream().map(plugin.getRecipeManager()::getRecipeKey).forEach(player::discoverRecipe);
+        plugin.getEffectRegistry().getRegisteredEffects().stream().map(plugin.getRecipeManager()::getRecipeKey).forEach(player::discoverRecipe);
     }
 
     @EventHandler
@@ -49,27 +48,25 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
 
         // Giving the player their starting effects if they haven't joined before
-        if (plugin.getMainConfig().joinEffectsEnabled() && !player.hasPlayedBefore()) {
-            List<InfuseEffect> effects = plugin.getMainConfig().joinEffects();
-            if (effects.isEmpty()) return;
-
-            InfuseEffect effect = effects.get((int) (Math.random() * effects.size()));
-            plugin.getEffectManager().equipEffect(player, effect, "1", false);
+        if (plugin.getMainConfig().joinEffectsEnabled() && !player.getPersistentDataContainer().has(InfusePlugin.JOIN_EFFECT_KEY)) {
+            plugin.getEffectManager().giveJoinEffect(player);
+            player.getPersistentDataContainer().set(InfusePlugin.JOIN_EFFECT_KEY, PersistentDataType.BOOLEAN, true);
             return;
         }
 
         // Enabling each effect
         InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
-        if (effect != null && !RegionBlocker.getInstance().isEffectBlocked(player, effect)) effect.equip(player);
+        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), effect)) effect.equip(new PaperPlayer(player));
 
         effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
-        if (effect != null && !RegionBlocker.getInstance().isEffectBlocked(player, effect)) effect.equip(player);
+        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), effect)) effect.equip(new PaperPlayer(player));
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (!EffectCraftManager.isRitual()) return;
+        if (!plugin.getRitualManager().isActive()) return;
 
-        event.getPlayer().showBossBar(EffectCraftManager.getBar());
+        //noinspection DataFlowIssue
+        event.getPlayer().showBossBar(plugin.getRitualManager().getBossBar());
     }
 }

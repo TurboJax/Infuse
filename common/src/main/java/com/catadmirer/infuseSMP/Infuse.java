@@ -1,5 +1,7 @@
 package com.catadmirer.infuseSMP;
 
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.platform.services.EffectRegistry;
 import com.catadmirer.infuseSMP.util.RegionBlocker;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -28,6 +30,8 @@ public interface Infuse {
     MainConfig getMainConfig();
 
     RegionBlocker getRegionBlocker();
+
+    <T extends InfuseEffect> EffectRegistry<T> getEffectRegistry();
 
     /** Checks the modrinth api for any updates to the plugin. */
     default String getLatestVersion() {

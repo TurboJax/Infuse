@@ -1,12 +1,11 @@
 package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.bukkit.events.EffectUnequipEvent;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.bukkit.util.ItemUtil;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
@@ -27,7 +26,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.UUID;
 
-public class Haste extends InfuseEffect {
+public class Haste extends BukkitEffect {
     private static final NamespacedKey fortuneKey = new NamespacedKey("infuse", "haste_fortune");
     private static final NamespacedKey efficiencyKey = new NamespacedKey("infuse", "haste_efficiency");
     private static final NamespacedKey unbreakingKey = new NamespacedKey("infuse", "haste_unbreaking");
@@ -37,25 +36,26 @@ public class Haste extends InfuseEffect {
     }
 
     public Haste(boolean augmented) {
-        super("haste", EffectIds.HASTE, augmented, EffectConstants.potionColor(EffectIds.HASTE), EffectConstants.ritualColor(EffectIds.HASTE));
+        super("haste", EffectConstants.Id.HASTE, augmented, EffectConstants.PotionColor.HASTE, EffectConstants.RitualColor.HASTE, EffectConstants.BackgroundColor.HASTE);
     }
 
     @Override
-    public void equip(Player owner) {
-
-    }
-
-    @Override
-    public void unequip(Player owner) {
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {
 
     }
 
     @Override
-    public void applyPassives(Player owner) {
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {
+
+    }
+
+    @Override
+    public void applyPassives(com.catadmirer.infuseSMP.platform.Player owner) {
         //todo: Move to PlayerItemHeldEvent listener
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        Player player = PaperPlayer.toBukkit(owner);
 
-        ItemStack item = owner.getInventory().getItemInMainHand();
+        ItemStack item = player.getInventory().getItemInMainHand();
         if (ItemUtil.isPickaxe(item) || ItemUtil.isAxe(item) || ItemUtil.isShovel(item) || ItemUtil.isHoe(item)) {
             ItemUtil.applySpecialEnchantment(item, fortuneKey, Enchantment.FORTUNE, plugin.getMainConfig().hasteFortuneLevel());
             ItemUtil.applySpecialEnchantment(item, efficiencyKey, Enchantment.EFFICIENCY, plugin.getMainConfig().hasteEfficiencyLevel());
@@ -64,14 +64,15 @@ public class Haste extends InfuseEffect {
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
         UUID playerUUID = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         if (CooldownManager.isOnCooldown(playerUUID, "haste")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
-        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -79,7 +80,7 @@ public class Haste extends InfuseEffect {
 
         CooldownManager.setTimes(playerUUID, "haste", duration, cooldown);
 
-        owner.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 20 * 15, 3));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 20 * 15, 3));
     }
 
     @Override
@@ -111,7 +112,7 @@ public class Haste extends InfuseEffect {
 
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), this)) return;
 
         Infuse.LOGGER.debug("[Haste] PlayerItemHeldEvent is for an haste user");
 
@@ -171,7 +172,7 @@ public class Haste extends InfuseEffect {
         if (!player.isBlocking()) return;
         // TODO: Handle if player blocks with main hand
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(player), this)) return;
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!ItemUtil.isAxe(attacker.getInventory().getItemInMainHand())) return;
 

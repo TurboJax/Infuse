@@ -9,55 +9,46 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class InfusePlaceholders extends PlaceholderExpansion {
-    private InfusePlugin plugin;
+    private final InfusePlugin plugin;
 
     public InfusePlaceholders(InfusePlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public String getAuthor() {
+    public @NonNull String getAuthor() {
         return "catadmirer";
     }
 
     @Override
-    public String getIdentifier() {
+    public @NonNull String getIdentifier() {
         return "infuse";
     }
 
     @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
+    public @NonNull String getVersion() {
+        return plugin.getVersion();
     }
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
         UUID uuid = player.getUniqueId();
 
-        switch (params.toLowerCase()) {
-            case "first_effect":
-                return getEffectIcon(uuid, "1");
-            case "second_effect":
-                return getEffectIcon(uuid, "2");
-            case "first_time":
-                return getTime(uuid, "1");
-            case "second_time":
-                return getTime(uuid, "2");
-            case "first_effect_raw":
-                return getEffectRaw(uuid, "1");
-            case "second_effect_raw":
-                return getEffectRaw(uuid, "2");
-            case "first_effect_name":
-                return getEffectName(uuid, "1");
-            case "second_effect_name":
-                return getEffectName(uuid, "2");
-            case "controls":
-                return plugin.getDataManager().getControlMode(uuid);
-        }
-
-        return null;
+        return switch (params.toLowerCase()) {
+            case "first_effect" -> getEffectIcon(uuid, "1");
+            case "second_effect" -> getEffectIcon(uuid, "2");
+            case "first_time" -> getTime(uuid, "1");
+            case "second_time" -> getTime(uuid, "2");
+            case "first_effect_raw" -> getEffectRaw(uuid, "1");
+            case "second_effect_raw" -> getEffectRaw(uuid, "2");
+            case "first_effect_name" -> getEffectName(uuid, "1");
+            case "second_effect_name" -> getEffectName(uuid, "2");
+            case "controls" -> plugin.getDataManager().getControlMode(uuid);
+            default -> null;
+        };
     }
 
     public String getEffectIcon(UUID uuid, String slot) {

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.catadmirer.infuseSMP.EffectRegistry;
+import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
 import com.catadmirer.infuseSMP.InfuseProvider;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.platform.Entity;
@@ -44,8 +44,7 @@ public class BasicRegionBlocker implements RegionBlocker {
 
     @Override
     public Set<InfuseEffect> getBlockedEffects(Location loc) {
-        return EffectRegistry.getRegisteredEffects()
-            .values()
+        return InfusePlugin.getInstance().getEffectRegistry().getRegisteredEffects()
             .stream()
             .filter(e -> {
                 List<Key> worlds = InfuseProvider.getInstance().getMainConfig().getBlacklistedWorlds(e);

@@ -1,12 +1,12 @@
 package com.catadmirer.infuseSMP;
 
-import java.util.stream.Stream;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.TagPattern;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Message {
     // Text serializers
@@ -102,6 +102,7 @@ public class Message {
         CONTROLS_INVALID_PARAM,
         INFUSE_INVALID_PARAM,
         INFUSE_INVALID_SLOT("slot"),
+        INFUSE_HELP,
         INFUSE_CONTROLS_USAGE,
         INFUSE_CONTROLS_SUCCESS("control_mode"),
         INFUSE_SETEFFECT_USAGE,
@@ -127,6 +128,7 @@ public class Message {
         ERROR_INVALID_COMMAND,
         ERROR_RITUAL_ACTIVE,
         ERROR_TARGET_NOT_FOUND,
+        RITUAL_INTERRUPTED("effect_name"),
 
         // Effect messages
         EMERALD_NAME,
@@ -194,7 +196,7 @@ public class Message {
 
         public final List<String> placeholders;
 
-        private MessageType(String... placeholders) {
+        MessageType(String... placeholders) {
             this.placeholders = List.of(placeholders);
         }
     }

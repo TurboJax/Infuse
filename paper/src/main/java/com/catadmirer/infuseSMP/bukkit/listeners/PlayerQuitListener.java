@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.bukkit.listeners;
 
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,9 +22,9 @@ public class PlayerQuitListener implements Listener {
 
         // Deactivating the player's effects
         InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
-        if (effect != null) effect.unequip(player);
+        if (effect != null) effect.unequip(new PaperPlayer(player));
 
         effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
-        if (effect != null) effect.unequip(player);
+        if (effect != null) effect.unequip(new PaperPlayer(player));
     }
 }

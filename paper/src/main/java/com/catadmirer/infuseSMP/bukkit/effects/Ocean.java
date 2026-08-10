@@ -1,9 +1,8 @@
 package com.catadmirer.infuseSMP.bukkit.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.bukkit.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.bukkit.platform.PaperPlayer;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import org.bukkit.Location;
@@ -18,33 +17,36 @@ import org.bukkit.util.Vector;
 
 import java.util.UUID;
 
-public class Ocean extends InfuseEffect {
+public class Ocean extends BukkitEffect {
     public Ocean() {
         this(false);
     }
 
     public Ocean(boolean augmented) {
-        super("ocean", EffectIds.OCEAN, augmented, EffectConstants.potionColor(EffectIds.OCEAN), EffectConstants.ritualColor(EffectIds.OCEAN));
+        super("ocean", EffectConstants.Id.OCEAN, augmented, EffectConstants.PotionColor.OCEAN, EffectConstants.RitualColor.OCEAN, EffectConstants.BackgroundColor.OCEAN);
     }
 
     @Override
-    public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+    public void equip(com.catadmirer.infuseSMP.platform.Player owner) {
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        Player player = PaperPlayer.toBukkit(owner);
         
-        owner.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, -1, 0, false, false));
-        owner.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, -1, 0, false, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, -1, 0, false, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, -1, 0, false, false));
     }
 
     @Override
-    public void unequip(Player owner) {
-        owner.removePotionEffect(PotionEffectType.WATER_BREATHING);
-        owner.removePotionEffect(PotionEffectType.DOLPHINS_GRACE);
+    public void unequip(com.catadmirer.infuseSMP.platform.Player owner) {
+        Player player = PaperPlayer.toBukkit(owner);
+        player.removePotionEffect(PotionEffectType.WATER_BREATHING);
+        player.removePotionEffect(PotionEffectType.DOLPHINS_GRACE);
     }
 
     @Override
-    public void applyPassives(Player owner) {
+    public void applyPassives(com.catadmirer.infuseSMP.platform.Player owner) {
         // Boosting the strength and damage of the passive drowning if the spark is active
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        Player player = PaperPlayer.toBukkit(owner);
 
         int drownStrength = plugin.getMainConfig().oceanPassiveDrownStrength();
         int drownDamage = plugin.getMainConfig().oceanPassiveDrownDamage();
@@ -54,10 +56,10 @@ public class Ocean extends InfuseEffect {
         }
 
         // TODO: Make this use packets for air bubbles
-        for (Player otherPlayer : owner.getWorld().getPlayers()) {
-            if (otherPlayer.equals(owner)) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(otherPlayer, this)) continue;
-            if (otherPlayer.getLocation().distance(owner.getLocation()) > 5) continue;
+        for (Player otherPlayer : player.getWorld().getPlayers()) {
+            if (otherPlayer.equals(player)) continue;
+            if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(otherPlayer), this)) continue;
+            if (otherPlayer.getLocation().distance(player.getLocation()) > 5) continue;
 
             int newAir = Math.max(otherPlayer.getRemainingAir() - drownStrength, -20);
             otherPlayer.setRemainingAir(newAir);
@@ -68,17 +70,18 @@ public class Ocean extends InfuseEffect {
     }
 
     @Override
-    public void activateSpark(Player caster) {
-        UUID playerUUID = caster.getUniqueId();
+    public void activateSpark(com.catadmirer.infuseSMP.platform.Player owner) {
+        UUID playerUUID = owner.getUniqueId();
+        Player player = PaperPlayer.toBukkit(owner);
 
         if (CooldownManager.isOnCooldown(playerUUID, "ocean")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(caster)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(caster, Ocean.this)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, Ocean.this)) return;
 
-        caster.playSound(caster.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         final double radius = 5;
-        final World world = caster.getWorld();
+        final World world = player.getWorld();
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
@@ -98,9 +101,9 @@ public class Ocean extends InfuseEffect {
 
                 for (int angle = 0; angle < 360; angle += 10) {
                     double rad = Math.toRadians(angle);
-                    double x = caster.getLocation().getX() + radius * Math.cos(rad);
-                    double z = caster.getLocation().getZ() + radius * Math.sin(rad);
-                    Location particleLoc = new Location(world, x, caster.getLocation().getY(), z);
+                    double x = owner.getLocation().getX() + radius * Math.cos(rad);
+                    double z = owner.getLocation().getZ() + radius * Math.sin(rad);
+                    Location particleLoc = new Location(world, x, owner.getLocation().getY(), z);
                     world.spawnParticle(Particle.FALLING_WATER, particleLoc, 1);
                 }
 
@@ -113,22 +116,22 @@ public class Ocean extends InfuseEffect {
             @Override
             public void run() {
                 // Stopping when the spark has run out
-                if (!CooldownManager.isEffectActive(caster.getUniqueId(), "ocean")) {
+                if (!CooldownManager.isEffectActive(owner.getUniqueId(), "ocean")) {
                     cancel();
                     return;
                 }
 
-                World world = caster.getWorld();
-                Location holderLoc = caster.getLocation();
+                World world = player.getWorld();
+                Location holderLoc = player.getLocation();
                 double radius = plugin.getMainConfig().oceanPullRadius();
                 double strength = plugin.getMainConfig().oceanPullStrength();
 
                 for (Player p : world.getPlayers()) {
-                    if (p.equals(caster)) continue;
-                    if (plugin.getDataManager().isTrusted(caster, p)) continue;
+                    if (p.equals(player)) continue;
+                    if (plugin.getDataManager().isTrusted(player, p)) continue;
                     if (p.getLocation().distance(holderLoc) > radius) continue;
-                    if (!RegionBlocker.getInstance().canBeTargetedBySpark(p)) continue;
-                    if (RegionBlocker.getInstance().isEffectBlocked(p, Ocean.this)) continue;
+                    if (!plugin.getRegionBlocker().canBeTargetedBySpark(new PaperPlayer(p))) continue;
+                    if (plugin.getRegionBlocker().isEffectBlocked(new PaperPlayer(p), Ocean.this)) continue;
 
                     Vector direction = holderLoc.toVector().subtract(p.getLocation().toVector());
                     if (direction.lengthSquared() > 0.0001) {

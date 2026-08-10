@@ -1,5 +1,5 @@
 plugins {
-    `java`
+    `java-library`
     `maven-publish`
     alias(libs.plugins.paperweight)
     alias(libs.plugins.run.paper)

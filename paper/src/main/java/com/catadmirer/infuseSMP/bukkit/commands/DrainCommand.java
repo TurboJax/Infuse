@@ -3,35 +3,39 @@ package com.catadmirer.infuseSMP.bukkit.commands;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.bukkit.InfusePlugin;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jspecify.annotations.NonNull;
 
-public class DrainCommand implements CommandExecutor {
+public class DrainCommand {
     private final InfusePlugin plugin;
+    private final String slot;
 
-    public DrainCommand(InfusePlugin plugin) {
-        this.plugin = plugin;
+    public static LiteralCommandNode<CommandSourceStack> build(InfusePlugin plugin, boolean left) {
+        DrainCommand cmd = new DrainCommand(plugin, left ? "1" : "2");
+
+        return Commands.literal(left ? "ldrain" : "rdrain")
+            .executes(cmd::drain)
+            .build();
     }
 
-    @Override
-    public boolean onCommand(@NonNull CommandSender sender, @NonNull Command command, @NonNull String label, String @NonNull [] args) {
+    public DrainCommand(InfusePlugin plugin, String slot) {
+        this.plugin = plugin;
+        this.slot = slot;
+    }
+
+    public int drain(CommandContext<CommandSourceStack> ctx) {
+        CommandSender sender = ctx.getSource().getSender();
         if (!(sender instanceof Player player)) {
             sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
-            return true;
+            return 1;
         }
 
-        // Getting the slot to drain based on the command used.  Accepts /ldrain or /rdrain
-        if (label.equals("ldrain")){
-            plugin.getEffectManager().drainEffect(player, "1");
-        } else if (label.equals("rdrain")) {
-            plugin.getEffectManager().drainEffect(player, "2");
-        } else {
-            player.sendMessage(new Message(MessageType.WITHDRAW_INVALID).toComponent());
-        }
+        plugin.getEffectManager().drainEffect(player, slot);
 
-        return true;
+        return 1;
     }
 }
