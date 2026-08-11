@@ -30,8 +30,7 @@ public class MainConfig {
         // Creating the file if it doesn't exist.
         if (!file.exists()) {
             file.getParentFile().mkdirs();
-            plugin.saveResource(file.getName(), true);            e.printStackTrace();
-
+            plugin.saveResource(file.getName(), true);
         }
 
         // Loading the config
