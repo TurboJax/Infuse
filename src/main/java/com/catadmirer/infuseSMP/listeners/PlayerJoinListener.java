@@ -35,7 +35,7 @@ public class PlayerJoinListener implements Listener {
         String controlMode = plugin.getDataManager().getControlMode(player.getUniqueId());
         if (controlMode == null) controlMode = "Offhand";
 
-        Message msg = new Message(MessageType.JOIN_ABILITY_NOTIFY);
+        Message msg = new Message(MessageType.CONTROL_MODE_NOTIFY);
         msg.applyPlaceholder("control_mode", controlMode);
         player.sendMessage(msg.toComponent());
     }
