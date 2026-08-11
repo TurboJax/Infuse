@@ -138,6 +138,10 @@ public class MainConfig {
         return config.getBoolean("join_effects_enabled");
     }
 
+    public boolean dropOnNaturalDeath() {
+        return config.getBoolean("drop_on_natural_death", true);
+    }
+
     public List<InfuseEffect> joinEffects() {
         return config.getStringList("join_effects").stream().map(InfuseEffect::fromString).filter(Objects::nonNull).toList();
     }
@@ -358,6 +362,8 @@ public class MainConfig {
     }
 
     public void applyUpdates() {
+        if (!config.contains("drop_on_natural_death")) config.set("drop_on_natural_death", true);
+
         if (config.contains("ritual_duration")) {
             config.set("rituals.duration", config.get("ritual_duration"));
             config.set("rituals.ender_duration", config.get("ritual_duration_ender"));

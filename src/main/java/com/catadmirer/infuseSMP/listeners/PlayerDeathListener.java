@@ -41,8 +41,12 @@ public class PlayerDeathListener implements Listener {
      */
     @EventHandler
     public void dropEffect(PlayerDeathEvent event) {
-        EquipResult result;
         Player player = event.getEntity();
+
+        // Skipping natural deaths if the config allows
+        if (player.getKiller() == null && !plugin.getMainConfig().dropOnNaturalDeath()) return;
+
+        EquipResult result;
         String dropMode = plugin.getMainConfig().effectDrops();
         switch (dropMode.toLowerCase()) {
             case "random" -> {

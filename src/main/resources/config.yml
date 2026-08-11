@@ -24,6 +24,9 @@ player_head_drops: true
 
 brewing_gui: true
 
+# If true, players will drop effects when they die from any cause.  If false, they need to be killed by another player.
+drop_on_natural_death: true
+
 #
 # Ritual configs
 #
