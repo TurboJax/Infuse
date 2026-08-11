@@ -117,7 +117,7 @@ public class Message {
         INFUSE_CLEAREFFECTS_SUCCESS("player_name"),
         INFUSE_COOLDOWN_USAGE,
         INFUSE_COOLDOWN_SUCCESS("player_name"),
-        JOIN_ABILITY_NOTIFY("control_mode"),
+        CONTROL_MODE_NOTIFY("control_mode"),
         DRAIN_SUCCESS("effect_name"),
         DRAIN_CANCELLED,
         EFFECT_EQUIPPED("effect_name"),

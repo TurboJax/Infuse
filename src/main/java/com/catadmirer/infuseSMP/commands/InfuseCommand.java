@@ -86,6 +86,7 @@ public class InfuseCommand {
             )
             .then(Commands.literal("controls")
                 .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.controls") && c.getSender() instanceof Player)
+                .executes(cmd::showControls)
                 .then(Commands.argument("choice", CustomArgumentTypes.CONTROL_MODE)
                     .executes(c -> cmd.controls(c, c.getArgument("choice", String.class)))
                 )
@@ -276,6 +277,23 @@ public class InfuseCommand {
         Message msg = new Message(MessageType.INFUSE_COOLDOWN_SUCCESS);
         msg.applyPlaceholder("player_name", target.getName());
         sender.sendMessage(msg.toComponent());
+
+        return 1;
+    }
+
+    public int showControls(CommandContext<CommandSourceStack> ctx) {
+        CommandSender sender = ctx.getSource().getSender();
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can use this command", NamedTextColor.RED));
+            return 1;
+        }
+
+        String controlMode = plugin.getDataManager().getControlMode(player.getUniqueId());
+
+        Message msg = new Message(MessageType.CONTROL_MODE_NOTIFY);
+        msg.applyPlaceholder("control_mode", controlMode);
+        player.sendMessage(msg.toComponent());
 
         return 1;
     }
