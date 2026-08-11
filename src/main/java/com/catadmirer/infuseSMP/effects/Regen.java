@@ -92,7 +92,7 @@ public class Regen extends InfuseEffect {
             final double radius = plugin.getMainConfig().regenSparkHealTrustedRadius();
             for (Entity loopentity : player.getNearbyEntities(radius, radius, radius)) {
                 if (loopentity instanceof Player otherplayer) {
-                    if (plugin.getDataManager().isTrusted(player, otherplayer) && !RegionBlocker.getInstance().isEffectBlocked(otherplayer, this)) {
+                    if (plugin.getDataManager().doesTrust(player, otherplayer) && !RegionBlocker.getInstance().isEffectBlocked(otherplayer, this)) {
                         otherplayer.heal(event.getDamage() / 2);
                     }
                 }

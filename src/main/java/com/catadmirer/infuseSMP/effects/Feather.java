@@ -111,7 +111,7 @@ public class Feather extends InfuseEffect {
             if (!(entity instanceof LivingEntity target)) continue;
             if (RegionBlocker.getInstance().isEffectBlocked(target, this)) continue;
             if (!RegionBlocker.getInstance().canBeTargetedBySpark(target)) continue;
-            if (target instanceof Player targetPlayer && plugin.getDataManager().isTrusted(player, targetPlayer)) continue;
+            if (target instanceof Player targetPlayer && plugin.getDataManager().doesTrust(player, targetPlayer)) continue;
 
             final double damage = plugin.getMainConfig().featherLandDamage();
             target.damage(damage);

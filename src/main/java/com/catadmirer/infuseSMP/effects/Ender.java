@@ -62,7 +62,7 @@ public class Ender extends InfuseEffect {
         for (Entity entity : nearbyEntities) {
             if (!(entity instanceof Player nearby)) continue;
             if (nearby.getUniqueId().equals(owner.getUniqueId())) continue;
-            if (plugin.getDataManager().isTrusted(nearby, owner)) continue;
+            if (plugin.getDataManager().doesTrust(owner, nearby)) continue;
             nearby.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 40, 1, false, false));
         }
     }
@@ -240,7 +240,7 @@ public class Ender extends InfuseEffect {
         if (!fireballName.equals(fireball.customName())) return;
         if (!(event.getEntity() instanceof Player target)) return;
         if (!(fireball.getShooter() instanceof Player shooter)) return;
-        if (plugin.getDataManager().isTrusted(target, shooter)) return;
+        if (plugin.getDataManager().doesTrust(shooter, target)) return;
 
         if (RegionBlocker.getInstance().isEffectBlocked(shooter, this)) return;
         if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
@@ -255,7 +255,7 @@ public class Ender extends InfuseEffect {
         if (!fireballName.equals(fireball.customName())) return;
         if (!(event.getHitEntity() instanceof Player target)) return;
         if (!(fireball.getShooter() instanceof Player shooter)) return;
-        if (plugin.getDataManager().isTrusted(target, shooter)) return;
+        if (plugin.getDataManager().doesTrust(shooter, target)) return;
 
         if (RegionBlocker.getInstance().isEffectBlocked(shooter, this)) return;
         if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;

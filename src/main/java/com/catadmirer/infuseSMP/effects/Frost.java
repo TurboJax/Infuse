@@ -96,7 +96,7 @@ public class Frost extends InfuseEffect {
 
         for (Player player : world.getPlayers()) {
             if (player.equals(owner)) continue;
-            if (plugin.getDataManager().isTrusted(player, owner)) continue;
+            if (plugin.getDataManager().doesTrust(owner, player)) continue;
             if (player.getLocation().distance(center) > radius) continue;
             if (!RegionBlocker.getInstance().canBeTargetedBySpark(player)) continue;
             if (RegionBlocker.getInstance().isEffectBlocked(player, Frost.this)) continue;

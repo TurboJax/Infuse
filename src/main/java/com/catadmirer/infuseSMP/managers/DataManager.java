@@ -134,7 +134,7 @@ public class DataManager {
         setTrusted(caster, trustedSet);
     }
 
-    public boolean isTrusted(OfflinePlayer caster, OfflinePlayer trusted) {
+    public boolean doesTrust(OfflinePlayer caster, OfflinePlayer trusted) {
         if (caster == null || trusted == null) return false;
         if (caster.getUniqueId().equals(trusted.getUniqueId())) return true;
 
