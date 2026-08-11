@@ -6,9 +6,7 @@ import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
@@ -16,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -75,41 +74,15 @@ public class Speed extends InfuseEffect {
 
         owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
         ParticleManager.spawnEffectCloud(owner, Color.fromRGB(0xD1A44B));
-        final Vector direction = owner.getEyeLocation().getDirection().normalize();
-        double playerVelocityMultiplier = plugin.getMainConfig().speedDashMultiplier();
-        owner.setVelocity(direction.clone().multiply(playerVelocityMultiplier));
-        final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(0xE6DCAA), 1.5F);
-        final Location[] previousLocation = new Location[]{owner.getLocation().clone()};
-        final int[] ticksPassed = new int[]{0};
-        final Location anchor = owner.getLocation();
-        Bukkit.getRegionScheduler().runAtFixedRate(plugin, anchor, (task) -> {
-            if (!owner.isOnline()) {
-                task.cancel();
-                return;
-            }
 
-            Location currentLocation = owner.getLocation();
-            double distance = previousLocation[0].distance(currentLocation);
+        // Maximum angle of -15 degrees (90 is straight down, -90 straight up)
+        double rotY = Math.min(owner.getPitch(), -15);
+        double rotX = owner.getYaw();
+        double xz = Math.cos(Math.toRadians(rotY));
 
-            if (distance > 0.1) {
-                Vector step = currentLocation.toVector().subtract(previousLocation[0].toVector()).normalize().multiply(0.3);
-                Location particleLocation = previousLocation[0].clone();
-
-                for (double d = 0; d <= distance; d += step.length()) {
-                    particleLocation.add(step);
-                    owner.getWorld().spawnParticle(Particle.DUST, particleLocation, 5, 0.1, 0.05, 0.1, 0.05, dustOptions);
-                }
-
-                previousLocation[0] = currentLocation.clone();
-            }
-
-            if (ticksPassed[0] >= 3 && owner.isOnGround()) {
-                task.cancel();
-                return;
-            }
-
-            ticksPassed[0]++;
-        }, 1L, 1L);
+        Vector boost = new Vector(-xz * Math.sin(Math.toRadians(rotX)), -Math.sin(Math.toRadians(rotY)), xz * Math.cos(Math.toRadians(rotX)));
+        boost.multiply(plugin.getMainConfig().speedDashMultiplier());
+        owner.setVelocity(owner.getVelocity().add(boost));
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -164,6 +137,17 @@ public class Speed extends InfuseEffect {
         event.getProjectile().setVelocity(event.getProjectile().getVelocity().multiply(pullFraction));
 
         bowPullStartTime.remove(player.getUniqueId());
+    }
+
+    @EventHandler
+    public void sparkMovingParticles(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+
+        if (!plugin.getDataManager().hasEffect(player, this)) return;
+        if (!CooldownManager.isEffectActive(player.getUniqueId(), "speed")) return;
+
+        final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(0xE6DCAA), 1.5F);
+        player.getWorld().spawnParticle(Particle.DUST, event.getFrom(), 5, 0.1, 0.05, 0.1, 0.05, dustOptions);
     }
 
     @EventHandler
