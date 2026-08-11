@@ -80,6 +80,7 @@ public class InfuseCommand {
             )
             .then(Commands.literal("cooldown")
                 .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.cooldown"))
+                .executes(c -> cmd.cooldown(c, null))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .executes(c -> cmd.cooldown(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
                 )
@@ -255,7 +256,7 @@ public class InfuseCommand {
         return 1;
     }
     
-    public int cooldown(CommandContext<CommandSourceStack> ctx, PlayerSelectorArgumentResolver resolver) {
+    public int cooldown(CommandContext<CommandSourceStack> ctx, @Nullable PlayerSelectorArgumentResolver resolver) {
         CommandSender sender = ctx.getSource().getSender();
 
         // Getting the player and making sure they are online
@@ -265,6 +266,13 @@ public class InfuseCommand {
         } catch (CommandSyntaxException err) {
             sender.sendMessage(Message.mcs.deserialize(err.getRawMessage()));
             return 1;
+        } catch (NullPointerException e) {
+            if (sender instanceof Player p) {
+                target = p;
+            } else {
+                sender.sendMessage(Component.text("Invalid target.  Please specify a player.", NamedTextColor.RED));
+                return 1;
+            }
         }
 
         if (!target.isOnline()) {
