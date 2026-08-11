@@ -19,7 +19,10 @@ public class SparkCommand {
     public static LiteralCommandNode<CommandSourceStack> build(Infuse plugin, boolean lSpark) {
         SparkCommand cmd = new SparkCommand(plugin, lSpark ? "1" : "2");
 
-        return Commands.literal(lSpark ? "lspark" : "rspark").executes(cmd::activateSpark).build();
+        return Commands.literal(lSpark ? "lspark" : "rspark")
+            .requires(c -> c.getSender().hasPermission("infuse.commands.spark") && c.getSender() instanceof Player)
+            .executes(cmd::activateSpark)
+            .build();
     }
 
     private SparkCommand(Infuse plugin, String slot) {

@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 public class DrawCommand {
     public static LiteralCommandNode<CommandSourceStack> build() {
         return Commands.literal("draw")
+            .requires(c -> c.getSender().hasPermission("infuse.commands.draw") && c.getSender() instanceof Player)
             .then(Commands.argument("loc1", ArgumentTypes.finePosition())
                 .then(Commands.argument("loc2", ArgumentTypes.finePosition())
                     .then(Commands.argument("count", IntegerArgumentType.integer(0, 500))

@@ -23,6 +23,7 @@ public class TrustCommand {
         TrustCommand cmd = new TrustCommand(manager, trust);
 
         return Commands.literal(trust ? "trust" : "untrust")
+            .requires(c -> c.getSender().hasPermission("infuse.commands.trust") && c.getSender() instanceof Player)
             .then(Commands.argument("target", ArgumentTypes.players()).executes(c -> cmd.trust(c, c.getArgument("target", PlayerSelectorArgumentResolver.class))))
             .build();
     }

@@ -33,36 +33,48 @@ commands:
     description: Draws a line between two coordinates
     usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
 permissions:
-  infuse.gui:
+  infuse.commands.infuse.gui:
     description: Allows players to use `/infuse gui`
     default: op
-  infuse.reload:
+  infuse.commands.infuse.reload:
     description: Allows players to use `/infuse reload`
     default: op
-  infuse.reroll:
+  infuse.commands.infuse.reroll:
     description: Allows players to use `/infuse reroll`
     default: op
-  infuse.recipes:
+  infuse.commands.infuse.recipes:
     description: Allows players to use `/infuse recipes`
     default: true
-  infuse.giveeffect:
+  infuse.commands.infuse.giveeffect:
     description: Allows players to use `/infuse giveeffect`
     default: op
-  infuse.seteffect:
+  infuse.commands.infuse.seteffect:
     description: Allows players to use `/infuse seteffect`
     default: op
-  infuse.cleareffects:
+  infuse.commands.infuse.cleareffects:
     description: Allows players to use `/infuse cleareffects`
     default: op
-  infuse.cooldown:
+  infuse.commands.infuse.cooldown:
     description: Allows players to use `/infuse cooldown`
     default: op
-  infuse.controls:
+  infuse.commands.infuse.controls:
     description: Allows players to use `/infuse controls`
     default: true
-  infuse.help:
-    description: Allows players to use `/infuse help`
+  infuse.commands.drain:
+    description: Allows players to use `/ldrain` and `/rdrain`
+    default: true
+  infuse.commands.draw:
+    description: Allows players to use `/draw`
+    default: true
+  infuse.commands.spark:
+    description: Allows players to use `/lspark` and `/rspark`
+    default: true
+  infuse.commands.swap:
+    description: Allows players to use `/swap`
     default: true
   ability.use:
     description: Allows the player to use abilities.
     default: false
+  infuse.commands.trust:
+    description: Allows players to use `/trust` and `/untrust`
+    default: true

@@ -17,7 +17,10 @@ public class SwapCommand {
     public static LiteralCommandNode<CommandSourceStack> build(Infuse plugin) {
         SwapCommand cmd = new SwapCommand(plugin);
 
-        return Commands.literal("swap").executes(cmd::swap).build();
+        return Commands.literal("swap")
+            .requires(c -> c.getSender().hasPermission("infuse.commands.swap") && c.getSender() instanceof Player)
+            .executes(cmd::swap)
+            .build();
     }
 
     private SwapCommand(Infuse plugin) {
