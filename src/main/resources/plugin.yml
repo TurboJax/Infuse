@@ -72,9 +72,6 @@ permissions:
   infuse.commands.swap:
     description: Allows players to use `/swap`
     default: true
-  ability.use:
-    description: Allows the player to use abilities.
-    default: false
   infuse.commands.trust:
     description: Allows players to use `/trust` and `/untrust`
     default: true

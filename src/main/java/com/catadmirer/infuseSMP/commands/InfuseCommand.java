@@ -291,10 +291,6 @@ public class InfuseCommand {
         // Setting the control mode for the user.
         plugin.getDataManager().setControlMode(player.getUniqueId(), choice);
 
-        // Assigning the permission for offhand use if the user chose offhand mode
-        boolean offhandEnabled = choice.equalsIgnoreCase("offhand");
-        sender.addAttachment(plugin, "ability.use", !offhandEnabled);
-
         Message msg = new Message(MessageType.INFUSE_CONTROLS_SUCCESS);
         msg.applyPlaceholder("control_mode", choice);
         sender.sendMessage(msg.toComponent());
