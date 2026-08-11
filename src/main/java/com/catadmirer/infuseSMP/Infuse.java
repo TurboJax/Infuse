@@ -31,6 +31,8 @@ public class Infuse extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("Infuse");
     public static final NamespacedKey JOIN_EFFECT_KEY = new NamespacedKey("infuse", "has_join_effects");
 
+    private static Infuse instance;
+
     private final DataManager dataManager;
     private final EffectManager effectManager;
     private final MainConfig mainConfig;
@@ -41,10 +43,13 @@ public class Infuse extends JavaPlugin {
 
     @NonNull
     public static Infuse getInstance() {
-        return JavaPlugin.getPlugin(Infuse.class);
+        assert instance != null;
+        return instance;
     }
 
     public Infuse() {
+        instance = this;
+
         this.mainConfig = new MainConfig(this);
         this.dataManager = new DataManager(this);
         this.effectManager = new EffectManager(this);
