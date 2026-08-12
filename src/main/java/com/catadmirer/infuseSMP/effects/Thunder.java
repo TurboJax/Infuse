@@ -64,9 +64,10 @@ public class Thunder extends InfuseEffect {
         final double baseRadius = plugin.getMainConfig().thunderSparkBaseRadius();
         final double radiusBoostPerPlayer = plugin.getMainConfig().thunderSparkPerPlayerBoostRadius();
 
+        final long period = 20;
         // Starting the lightning storm
         new BukkitRunnable() {
-            int ticksElapsed = 0;
+            long ticksElapsed = 0;
 
             public void run() {
                 if (this.ticksElapsed >= durationTicks) {
@@ -84,6 +85,8 @@ public class Thunder extends InfuseEffect {
                     radius = tmp;
                 }
 
+                // TODO: Spawn particles in a ring around the radius
+
                 // Striking all players within the radius
                 for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
                     if (!(entity instanceof Player target)) continue;
@@ -93,9 +96,9 @@ public class Thunder extends InfuseEffect {
                     strikeLighting(target, owner);
                 }
 
-                this.ticksElapsed += 20;
+                this.ticksElapsed += period;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, period);
     }
 
     @Override
