@@ -10,6 +10,7 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.bukkit.Bukkit;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -41,6 +42,9 @@ public class HitTracker implements Listener {
 
         // Skipping the hit if the attacker trusts the target
         if (plugin.getTrustManager().doesTrust(attacker, target)) return;
+
+        // Skipping the hit if it was lightning from a thunder effect user.
+        if (event.getDamageSource().getDamageType() == DamageType.LIGHTNING_BOLT) return;
 
         Infuse.LOGGER.debug("{} has hit {}", attacker.getName(), target.getName());
 
