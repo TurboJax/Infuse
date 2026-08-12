@@ -67,11 +67,7 @@ public class HitTracker implements Listener {
         Infuse.LOGGER.debug("{}'s hit counter is {}.", attacker.getName(), hits);
 
         if (hits >= 10) {
-            // Calling the TenHitEvent
-            TenHitEvent tenHit = new TenHitEvent(attacker, target);
-            tenHit.callEvent();
-            Infuse.LOGGER.debug("Called TenHitEvent");
-
+            // Resetting the hit tracker
             hitTracker.put(attacker.getUniqueId(), 0);
 
             // Removing 10 objects from the queue
@@ -79,6 +75,12 @@ public class HitTracker implements Listener {
                 if (decayQueue.isEmpty()) continue;
                 decayQueue.remove();
             }
+
+            // Calling the TenHitEvent
+            TenHitEvent tenHit = new TenHitEvent(attacker, target);
+            tenHit.callEvent();
+            Infuse.LOGGER.debug("Called TenHitEvent");
+
             Infuse.LOGGER.debug("Removed items from queue.");
             return;
         }
