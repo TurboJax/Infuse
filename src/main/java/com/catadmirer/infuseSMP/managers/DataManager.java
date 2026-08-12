@@ -2,21 +2,23 @@ package com.catadmirer.infuseSMP.managers;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import org.bukkit.Bukkit;
+import com.catadmirer.infuseSMP.util.trust.TrustManager;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-public class DataManager {
+@NullMarked
+public class DataManager implements TrustManager {
     private final File dataFile;
     private final YamlConfiguration config;
 
@@ -111,37 +113,34 @@ public class DataManager {
         save();
     }
 
-    public List<OfflinePlayer> getTrusted(OfflinePlayer truster) {
-        return new ArrayList<>(config.getStringList(truster.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).toList());
+    @Override
+    public Set<UUID> getTrusted(UUID player) {
+        return config.getStringList(player + ".trust").stream().map(UUID::fromString).collect(Collectors.toSet());
     }
 
-    public void setTrusted(OfflinePlayer truster, List<OfflinePlayer> trusted) {
-        config.set(truster.getUniqueId() + ".trust", trusted.stream().map(OfflinePlayer::getUniqueId).map(UUID::toString).toList());
+    @Override
+    public void setTrusted(UUID player, Set<UUID> trusted) {
+        config.set(player + ".trust", trusted.stream().map(UUID::toString).toList());
         save();
     }
 
-    public void addTrust(OfflinePlayer caster, OfflinePlayer toTrust) {
-        List<OfflinePlayer> trustedPlayers = getTrusted(caster);
-        trustedPlayers.add(toTrust);
+    @Override
+    public void addTrust(UUID player, UUID trusted) {
+        Set<UUID> trustedPlayers = getTrusted(player);
+        trustedPlayers.add(trusted);
 
-        setTrusted(caster, trustedPlayers);
+        setTrusted(player, trustedPlayers);
     }
 
-    public void removeTrust(OfflinePlayer caster, OfflinePlayer trusted) {
-        List<OfflinePlayer> trustedSet = getTrusted(caster);
+    @Override
+    public void removeTrust(UUID player, UUID trusted) {
+        Set<UUID> trustedSet = getTrusted(player);
         trustedSet.remove(trusted);
 
-        setTrusted(caster, trustedSet);
+        setTrusted(player, trustedSet);
     }
 
-    public boolean doesTrust(OfflinePlayer caster, OfflinePlayer trusted) {
-        if (caster == null || trusted == null) return false;
-        if (caster.getUniqueId().equals(trusted.getUniqueId())) return true;
-
-        return getTrusted(caster).contains(trusted);
-    }
-
-    public void setEffect(UUID owner, String slot, InfuseEffect effect) {
+    public void setEffect(UUID owner, String slot, @Nullable InfuseEffect effect) {
         String key = owner.toString() + "." + slot;
         if (effect == null) {
             config.set(key, null);
