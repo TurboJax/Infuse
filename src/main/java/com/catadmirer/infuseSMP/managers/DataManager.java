@@ -113,17 +113,20 @@ public class DataManager implements TrustManager {
         save();
     }
 
+    @Deprecated
     @Override
     public Set<UUID> getTrusted(UUID player) {
         return config.getStringList(player + ".trust").stream().map(UUID::fromString).collect(Collectors.toSet());
     }
 
+    @Deprecated
     @Override
     public void setTrusted(UUID player, Set<UUID> trusted) {
         config.set(player + ".trust", trusted.stream().map(UUID::toString).toList());
         save();
     }
 
+    @Deprecated
     @Override
     public void addTrust(UUID player, UUID trusted) {
         Set<UUID> trustedPlayers = getTrusted(player);
@@ -132,6 +135,7 @@ public class DataManager implements TrustManager {
         setTrusted(player, trustedPlayers);
     }
 
+    @Deprecated
     @Override
     public void removeTrust(UUID player, UUID trusted) {
         Set<UUID> trustedSet = getTrusted(player);
