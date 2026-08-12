@@ -691,7 +691,7 @@ public class Apophis extends InfuseEffect {
         if (!CooldownManager.isEffectActive(player.getUniqueId(), getPlainKey())) return;
         if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
 
-        for (OfflinePlayer trusted : plugin.getDataManager().getTrusted(player)) {
+        for (OfflinePlayer trusted : plugin.getTrustManager().getTrusted(player)) {
             Player trustedPlayer = trusted.getPlayer();
 
             if (trustedPlayer == null) continue;

@@ -3,6 +3,7 @@ package com.catadmirer.infuseSMP.commands;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.managers.DataManager;
+import com.catadmirer.infuseSMP.util.trust.TrustManager;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -16,10 +17,10 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 public class TrustCommand {
-    private final DataManager dataManager;
+    private final TrustManager trustManager;
     private final boolean trust;
 
-    public static LiteralCommandNode<CommandSourceStack> build(DataManager manager, boolean trust) {
+    public static LiteralCommandNode<CommandSourceStack> build(TrustManager manager, boolean trust) {
         TrustCommand cmd = new TrustCommand(manager, trust);
 
         return Commands.literal(trust ? "trust" : "untrust")
@@ -28,8 +29,8 @@ public class TrustCommand {
             .build();
     }
 
-    private TrustCommand(DataManager dataManager, boolean trust) {
-        this.dataManager = dataManager;
+    private TrustCommand(TrustManager trustManager, boolean trust) {
+        this.trustManager = trustManager;
         this.trust = trust;
     }
 
@@ -66,8 +67,8 @@ public class TrustCommand {
         // Preventing duplicate trust entries
         Message msg = new Message(MessageType.TRUST_ALREADY_TRUSTED);
 
-        if (!dataManager.getTrusted(caster).contains(target)) {
-            dataManager.addTrust(caster, target);
+        if (!trustManager.getTrusted(caster).contains(target)) {
+            trustManager.addTrust(caster, target);
             msg = new Message(MessageType.TRUST_ADDED);
         }
 
@@ -79,8 +80,8 @@ public class TrustCommand {
         // Removing trust
         Message msg = new Message(MessageType.TRUST_NOT_TRUSTED);
 
-        if (dataManager.getTrusted(caster).contains(target)) {
-            dataManager.removeTrust(caster, target);
+        if (trustManager.getTrusted(caster).contains(target)) {
+            trustManager.removeTrust(caster, target);
             msg = new Message(MessageType.TRUST_REMOVED);
         }
 

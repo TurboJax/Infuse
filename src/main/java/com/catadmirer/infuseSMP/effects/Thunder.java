@@ -87,7 +87,7 @@ public class Thunder extends InfuseEffect {
                 // Striking all players within the radius
                 for (Entity entity : world.getNearbyEntities(owner.getLocation(), radius, radius, radius)) {
                     if (!(entity instanceof Player target)) continue;
-                    if (plugin.getDataManager().doesTrust(owner, target)) continue;
+                    if (plugin.getTrustManager().doesTrust(owner, target)) continue;
                     if (!RegionBlocker.getInstance().canBeTargetedBySpark(target)) continue;
 
                     strikeLighting(target, owner);
@@ -154,7 +154,7 @@ public class Thunder extends InfuseEffect {
         for (Entity entity : targets.getLast().getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof Player target)) continue;
             if (targets.contains(target)) continue;
-            if (plugin.getDataManager().doesTrust(attacker, target)) continue;
+            if (plugin.getTrustManager().doesTrust(attacker, target)) continue;
             if (RegionBlocker.getInstance().isEffectBlocked(entity, this)) return;
 
             // Target found!  Striking them then searching for the next target after 1 second.
@@ -208,7 +208,7 @@ public class Thunder extends InfuseEffect {
 
         // Only summoning lightning if the target is a living entity
         if (!(event.getEntity() instanceof LivingEntity target)) return;
-        if (target instanceof Player p && plugin.getDataManager().doesTrust(attacker, p)) return;
+        if (target instanceof Player p && plugin.getTrustManager().doesTrust(attacker, p)) return;
         if (RegionBlocker.getInstance().isEffectBlocked(target, this)) return;
 
         strikeLighting(target, attacker);

@@ -74,7 +74,7 @@ public class Invis extends InfuseEffect {
 
         for (Player player : world.getPlayers()) {
             if (player.getLocation().distance(owner.getLocation()) > radius) continue;
-            if (!plugin.getDataManager().doesTrust(owner, player)) continue;
+            if (!plugin.getTrustManager().doesTrust(owner, player)) continue;
             if (RegionBlocker.getInstance().isEffectBlocked(player, this)) continue;
 
             vanishedPlayers.add(player);
@@ -85,7 +85,7 @@ public class Invis extends InfuseEffect {
 
             for (Player other : Bukkit.getOnlinePlayers()) {
                 if (other.equals(vanished)) continue;
-                if (plugin.getDataManager().doesTrust(vanished, other)) continue;
+                if (plugin.getTrustManager().doesTrust(vanished, other)) continue;
                 other.hidePlayer(plugin, vanished);
             }
         }
@@ -121,7 +121,7 @@ public class Invis extends InfuseEffect {
 
                     for (Player p : world.getPlayers()) {
                         if (p.getLocation().distance(center) > radius) continue;
-                        if (plugin.getDataManager().doesTrust(owner, p)) continue;
+                        if (plugin.getTrustManager().doesTrust(owner, p)) continue;
                         if (!RegionBlocker.getInstance().canBeTargetedBySpark(p)) continue;
                         if (RegionBlocker.getInstance().isEffectBlocked(p, Invis.this)) continue;
 

@@ -124,7 +124,7 @@ public class Ocean extends InfuseEffect {
 
                 for (Player p : world.getPlayers()) {
                     if (p.equals(caster)) continue;
-                    if (plugin.getDataManager().doesTrust(caster, p)) continue;
+                    if (plugin.getTrustManager().doesTrust(caster, p)) continue;
                     if (p.getLocation().distance(holderLoc) > radius) continue;
                     if (!RegionBlocker.getInstance().canBeTargetedBySpark(p)) continue;
                     if (RegionBlocker.getInstance().isEffectBlocked(p, Ocean.this)) continue;

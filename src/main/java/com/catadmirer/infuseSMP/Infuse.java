@@ -10,6 +10,9 @@ import com.catadmirer.infuseSMP.expansions.InfusePlaceholders;
 import com.catadmirer.infuseSMP.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.DualRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
+import com.catadmirer.infuseSMP.util.trust.BetterTeamsTrustManager;
+import com.catadmirer.infuseSMP.util.trust.MultiTrustManager;
+import com.catadmirer.infuseSMP.util.trust.TrustManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -41,6 +44,7 @@ public class Infuse extends JavaPlugin {
     private final RecipeManager recipeManager;
     private final HitTracker hitTracker;
     private final RitualManager ritualManager;
+    private final TrustManager trustManager;
 
     @NonNull
     public static Infuse getInstance() {
@@ -58,6 +62,12 @@ public class Infuse extends JavaPlugin {
         this.recipeManager = new RecipeManager(this);
         this.hitTracker = new HitTracker(this);
         this.ritualManager = new RitualManager();
+
+        if (ExpansionHelper.canUseBetterTeams()) {
+            trustManager = new MultiTrustManager(new BetterTeamsTrustManager(), dataManager);
+        } else {
+            trustManager = dataManager;
+        }
     }
 
     public void onLoad() {
@@ -128,8 +138,8 @@ public class Infuse extends JavaPlugin {
             e.registrar().register(SparkCommand.build(this, true));
             e.registrar().register(SparkCommand.build(this, false));
 
-            e.registrar().register(TrustCommand.build(dataManager, true));
-            e.registrar().register(TrustCommand.build(dataManager, false));
+            e.registrar().register(TrustCommand.build(trustManager, true));
+            e.registrar().register(TrustCommand.build(trustManager, false));
 
             e.registrar().register(SwapCommand.build(this));
 
@@ -280,5 +290,9 @@ public class Infuse extends JavaPlugin {
 
     public RitualManager getRitualManager() {
         return ritualManager;
+    }
+
+    public TrustManager getTrustManager() {
+        return trustManager;
     }
 }

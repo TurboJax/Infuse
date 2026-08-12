@@ -1,10 +1,7 @@
 package com.catadmirer.infuseSMP.util.trust;
 
-import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.expansions.ExpansionHelper;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,12 +9,14 @@ import java.util.UUID;
 
 @NullMarked
 public class MultiTrustManager implements TrustManager {
-    private final Infuse plugin = Infuse.getInstance();
-    private final List<TrustManager> trustManagers = new ArrayList<>();
+    private final List<TrustManager> trustManagers;
 
-    public MultiTrustManager() {
-        if (ExpansionHelper.canUseBetterTeams() && plugin.getMainConfig().enableBetterTeams()) trustManagers.add(new BetterTeamsTrustManager());
-        trustManagers.add(plugin.getDataManager());
+    public MultiTrustManager(TrustManager... managers) {
+        trustManagers = List.of(managers);
+    }
+
+    public MultiTrustManager(List<TrustManager> managers) {
+        trustManagers = List.copyOf(managers);
     }
 
     @Override
