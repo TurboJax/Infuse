@@ -2,10 +2,11 @@ package com.catadmirer.infuseSMP;
 
 import com.catadmirer.infuseSMP.commands.*;
 import com.catadmirer.infuseSMP.effects.*;
+import com.catadmirer.infuseSMP.expansions.ExpansionHelper;
 import com.catadmirer.infuseSMP.extraeffects.*;
 import com.catadmirer.infuseSMP.listeners.*;
 import com.catadmirer.infuseSMP.managers.*;
-import com.catadmirer.infuseSMP.placeholders.InfusePlaceholders;
+import com.catadmirer.infuseSMP.expansions.InfusePlaceholders;
 import com.catadmirer.infuseSMP.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.DualRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
@@ -63,7 +64,7 @@ public class Infuse extends JavaPlugin {
         // Registering the vanilla effects
         registerEffects();
 
-        if (RegionBlocker.canUseWG()) {
+        if (ExpansionHelper.canUseWorldGuard()) {
             RegionBlocker.setInstance(new DualRegionBlocker());
             LOGGER.info("WorldGuard found!  Enabling region-based effect management.");
         } else {
@@ -102,7 +103,7 @@ public class Infuse extends JavaPlugin {
         new ActionBarUpdater(this).runTaskTimer(this, 0, 20);
 
         // Registering the PlaceholderAPI listener if the plugin is installed
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        if (ExpansionHelper.canUsePlaceholderAPI()) {
             new InfusePlaceholders(this).register();
             LOGGER.info("Placeholders Enabled!");
         } else {

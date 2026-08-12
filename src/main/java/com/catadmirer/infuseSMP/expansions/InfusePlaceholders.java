@@ -1,4 +1,4 @@
-package com.catadmirer.infuseSMP.placeholders;
+package com.catadmirer.infuseSMP.expansions;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
