@@ -67,6 +67,14 @@ join_effects:
   - fire
   - speed
 
+#
+# BetterTeams configs
+#
+betterteams:
+  enabled: false
+  trust_allies: false
+
+
 # First number is the augmented limit, the second is the regular limit
 craft_limits:
   emerald:  [1, 3]

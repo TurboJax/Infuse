@@ -146,6 +146,14 @@ public class MainConfig {
         return config.getStringList("join_effects").stream().map(InfuseEffect::fromString).filter(Objects::nonNull).toList();
     }
 
+    public boolean enableBetterTeams() {
+        return config.getBoolean("betterteams.enabled", false);
+    }
+
+    public boolean betterTeamsTrustAllies() {
+        return config.getBoolean("betterteams.trust_allies", false);
+    }
+
     public boolean enableApophis() {
         return config.getBoolean("extra_effects.Apophis");
     }
@@ -363,6 +371,11 @@ public class MainConfig {
 
     public void applyUpdates() {
         if (!config.contains("drop_on_natural_death")) config.set("drop_on_natural_death", true);
+
+        if (!config.contains("betterteams.enabled")) {
+            config.set("betterteams.enabled", false);
+            config.set("betterteams.trust_allies", false);
+        }
 
         if (config.contains("ritual_duration")) {
             config.set("rituals.duration", config.get("ritual_duration"));
