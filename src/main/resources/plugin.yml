@@ -46,15 +46,18 @@ permissions:
   infuse.commands.infuse.recipes:
     description: Allows players to use `/infuse recipes`
     default: true
-  infuse.commands.infuse.giveeffect:
-    description: Allows players to use `/infuse giveeffect`
+  infuse.commands.infuse.giveEffect:
+    description: Allows players to use `/infuse giveEffect`
     default: op
-  infuse.commands.infuse.seteffect:
-    description: Allows players to use `/infuse seteffect`
+  infuse.commands.infuse.setEffect:
+    description: Allows players to use `/infuse setEffect`
     default: op
-  infuse.commands.infuse.cleareffects:
-    description: Allows players to use `/infuse cleareffects`
+  infuse.commands.infuse.clearEffects:
+    description: Allows players to use `/infuse clearEffects`
     default: op
+  infuse.commands.infuse.getTrusted:
+    description: Allows players to use `/infuse getTrusted`
+    default: true
   infuse.commands.infuse.cooldown:
     description: Allows players to use `/infuse cooldown`
     default: op

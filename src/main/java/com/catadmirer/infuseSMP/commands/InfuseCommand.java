@@ -20,6 +20,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
@@ -53,16 +54,16 @@ public class InfuseCommand {
                 .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.recipes"))
                 .executes(InfuseCommand::recipes)
             )
-            .then(Commands.literal("giveeffect")
-                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.giveeffect"))
+            .then(Commands.literal("giveEffect")
+                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.giveEffect"))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .then(Commands.argument("effect", CustomArgumentTypes.INFUSE_EFFECT)
                         .executes(c -> cmd.giveEffect(c, c.getArgument("target", PlayerSelectorArgumentResolver.class), c.getArgument("effect", InfuseEffect.class)))
                     )
                 )
             )
-            .then(Commands.literal("seteffect")
-                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.seteffect"))
+            .then(Commands.literal("setEffect")
+                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.setEffect"))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .then(Commands.argument("effect", CustomArgumentTypes.INFUSE_EFFECT)
                         .then(Commands.argument("slot", CustomArgumentTypes.SLOT)
@@ -71,8 +72,8 @@ public class InfuseCommand {
                     )
                 )
             )
-            .then(Commands.literal("cleareffects")
-                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.cleareffects"))
+            .then(Commands.literal("clearEffects")
+                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.clearEffects"))
                 .executes(c -> cmd.clearEffects(c, null))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .executes(c -> cmd.clearEffects(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
@@ -83,6 +84,13 @@ public class InfuseCommand {
                 .executes(c -> cmd.cooldown(c, null))
                 .then(Commands.argument("target", ArgumentTypes.player())
                     .executes(c -> cmd.cooldown(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
+                )
+            )
+            .then(Commands.literal("getTrusted")
+                .requires(c -> c.getSender().hasPermission("infuse.commands.infuse.getTrusted"))
+                .executes(c -> cmd.getTrusted(c, null))
+                .then(Commands.argument("target", ArgumentTypes.player())
+                    .executes(c -> cmd.getTrusted(c, c.getArgument("target", PlayerSelectorArgumentResolver.class)))
                 )
             )
             .then(Commands.literal("controls")
@@ -233,16 +241,18 @@ public class InfuseCommand {
 
         // Getting the player and making sure they are online
         Player target;
-        try {
-            target = resolver.resolve(ctx.getSource()).getFirst();
-        } catch (CommandSyntaxException e) {
-            sender.sendMessage(Message.mcs.deserialize(e.getRawMessage()));
-            return 1;
-        } catch (NullPointerException e) {
+        if (resolver == null) {
             if (sender instanceof Player p) {
                 target = p;
             } else {
                 sender.sendMessage(Component.text("Invalid target.  Please specify a player.", NamedTextColor.RED));
+                return 1;
+            }
+        } else {
+            try {
+                target = resolver.resolve(ctx.getSource()).getFirst();
+            } catch (CommandSyntaxException e) {
+                sender.sendMessage(Message.mcs.deserialize(e.getRawMessage()));
                 return 1;
             }
         }
@@ -261,16 +271,18 @@ public class InfuseCommand {
 
         // Getting the player and making sure they are online
         Player target;
-        try {
-            target = resolver.resolve(ctx.getSource()).getFirst();
-        } catch (CommandSyntaxException err) {
-            sender.sendMessage(Message.mcs.deserialize(err.getRawMessage()));
-            return 1;
-        } catch (NullPointerException e) {
+        if (resolver == null) {
             if (sender instanceof Player p) {
                 target = p;
             } else {
                 sender.sendMessage(Component.text("Invalid target.  Please specify a player.", NamedTextColor.RED));
+                return 1;
+            }
+        } else {
+            try {
+                target = resolver.resolve(ctx.getSource()).getFirst();
+            } catch (CommandSyntaxException err) {
+                sender.sendMessage(Message.mcs.deserialize(err.getRawMessage()));
                 return 1;
             }
         }
@@ -285,6 +297,39 @@ public class InfuseCommand {
         Message msg = new Message(MessageType.INFUSE_COOLDOWN_SUCCESS);
         msg.applyPlaceholder("player_name", target.getName());
         sender.sendMessage(msg.toComponent());
+
+        return 1;
+    }
+
+    public int getTrusted(CommandContext<CommandSourceStack> ctx, @Nullable PlayerSelectorArgumentResolver resolver) {
+        CommandSender sender = ctx.getSource().getSender();
+
+        // Getting the player and making sure they are online
+        Player target;
+        if (resolver == null) {
+            if (sender instanceof Player p) {
+                target = p;
+            } else {
+                sender.sendMessage(Component.text("Invalid target.  Please specify a player.", NamedTextColor.RED));
+                return 1;
+            }
+        } else {
+            try {
+                target = resolver.resolve(ctx.getSource()).getFirst();
+            } catch (CommandSyntaxException err) {
+                sender.sendMessage(Message.mcs.deserialize(err.getRawMessage()));
+                return 1;
+            }
+        }
+
+        // Listing trusted players
+        if (sender.equals(target)) {
+            sender.sendMessage(Component.text("You trust:"));
+        } else {
+            sender.sendMessage(target.displayName().append(Component.text(target.getName() + " trusts:").style(Style.style())));
+        }
+
+        plugin.getTrustManager().getTrusted(target).forEach(p -> sender.sendMessage(Component.text("- " + p.getName())));
 
         return 1;
     }
