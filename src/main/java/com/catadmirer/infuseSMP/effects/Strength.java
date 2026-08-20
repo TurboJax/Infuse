@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 
 import java.util.UUID;
 
@@ -103,29 +104,39 @@ public class Strength extends InfuseEffect {
 
         // Storing the adjusted damage
         event.setDamage(damage);
+    }
 
-        // Shield stuffs
+    @EventHandler
+    public void handleShieldDisable(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player attacker)) return;
+        if (!plugin.getDataManager().hasEffect(attacker, this)) return;
         if (!(event.getEntity() instanceof Player player)) return;
-
-        // Making sure the player was blocking
         if (!player.isBlocking()) return;
-
-        // Making sure the attacker is using an axe
         if (!ItemUtil.isAxe(attacker.getInventory().getItemInMainHand())) return;
 
-        // Playing noise and stunning the opponent
+        // Cancelling the event
+        event.setCancelled(true);
+
+        // Playing noise and updating the shield
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_SHIELD_BREAK, 1, 1);
-
-        // Extending shield cooldown
         player.setCooldown(Material.SHIELD, 200);
-
-        // Damaging the shield
         player.getInventory().getItemInMainHand().damage(20, attacker);
-
-        // TODO: Test if the player will still count as blocking after this damage event.
+        player.clearActiveItem();
 
         // Halving the damage
-        event.setDamage(event.getDamage() / 2);
+        player.damage(event.getDamage() / 2, event.getDamageSource());
+    }
+
+    @EventHandler
+    public void preventExtraShieldDamage(PlayerItemDamageEvent event) {
+        // The only time a strength user damages a shield is when they are attacking someone using a shield.
+        // This prevents strength users from damaging a shield unless it is exactly 20 damage, which is how much damage they are meant to do when disabling a shield.
+        // You also don't have to worry about the damage the shield would normally recieve because the original damage event is not only cancelled, but the shield is lowered too.
+        if (event.getItem().getType() != Material.SHIELD) return;
+        if (!plugin.getDataManager().hasEffect(event.getPlayer(), this)) return;
+        if (event.getDamage() == 20) return;
+
+        event.setCancelled(true);
     }
 
     /** Boosts the piercing level of any arrow to 1 for players with the strength effect. */
